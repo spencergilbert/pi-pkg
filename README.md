@@ -36,6 +36,17 @@ Host *
 
 Sends a native terminal notification (OSC 777) when Pi finishes and is waiting for input. Works in Ghostty, iTerm2, WezTerm, and rxvt-unicode.
 
+### handoff
+
+Transfers context to a new focused session. `/handoff <goal>` summarizes the current conversation (decisions, key findings, relevant files) into a self-contained prompt, then creates a new session with the prompt as a draft in the editor for review before submitting — a lossless alternative to compaction.
+
+Taken from pi's handoff example (examples/extensions/handoff.ts).
+
+**Usage:**
+```text
+/handoff <goal for new thread>
+```
+
 ## Skills
 
 _Add skills in `skills/` — see [Pi skills docs](https://pi.dev/docs/skills)._
