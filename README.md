@@ -49,7 +49,16 @@ Taken from pi's handoff example (examples/extensions/handoff.ts).
 
 ## Skills
 
-_Add skills in `skills/` — see [Pi skills docs](https://pi.dev/docs/skills)._
+### kagi
+
+Web search and page-content extraction via the [Kagi API](https://kagi.com/api/docs) (v1). Pure Node.js, no browser or npm dependencies — just `KAGI_API_KEY`.
+
+```bash
+skills/kagi/search.mjs "query" -n 5 --time week
+skills/kagi/extract.mjs https://example.com/article
+```
+
+See [skills/kagi/SKILL.md](skills/kagi/SKILL.md) for full usage.
 
 ## Prompts
 

@@ -17,3 +17,7 @@ extensions/handoff.ts
 themes/catppuccin-frappe.json
   Taken from pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
   https://github.com/madeleineostoja/pi-catppuccin/blob/main/themes/catppuccin-frappe.json
+
+skills/kagi/{search,extract}.mjs
+  CLI structure inspired by badlogic's pi-skills brave-search (MIT, Copyright (c) 2024 Mario Zechner):
+  https://github.com/badlogic/pi-skills/blob/main/brave-search/search.js
