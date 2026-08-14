@@ -47,6 +47,24 @@ Taken from pi's handoff example (examples/extensions/handoff.ts).
 /handoff <goal for new thread>
 ```
 
+### goal
+
+Long-running objective mode. `/goal <objective>` sets a persistent goal for the session; after every agent turn a continuation is automatically queued, so the agent keeps working autonomously until the objective is verifiably complete, genuinely blocked, or paused. Goal state lives in the session log (surviving `/reload`, `/resume`, and tree navigation) — no external database. Time and token usage are tracked and shown in the footer, with an optional token budget that stops automatic continuation when reached.
+
+The agent manages the goal itself via three tools: `get_goal` (status and budgets), `create_goal` (only on explicit user request), and `update_goal` (mark `complete` after a strict verification audit, or `blocked` only after the same blocker repeats across three consecutive goal turns).
+
+**Usage:**
+```text
+/goal <objective>   set and start pursuing a goal
+/goal               show the current goal
+/goal edit          edit the current objective
+/goal pause         pause automatic continuation
+/goal resume        resume a paused/blocked goal
+/goal clear         clear the current goal
+```
+
+Derived from [mitsuhiko's goal extension](https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/goal.ts).
+
 ## Skills
 
 ### kagi

@@ -10,6 +10,10 @@ extensions/notify.ts
   https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/notify.ts
   Modified: simplified to OSC 777 notifications only.
 
+extensions/goal.ts
+  Derived from mitsuhiko's agent-stuff (Apache-2.0):
+  https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/goal.ts
+
 extensions/handoff.ts
   Taken from pi's extension examples (MIT, Copyright (c) earendil-works):
   https://pi.dev/docs/extensions
