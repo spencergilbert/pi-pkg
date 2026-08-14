@@ -13,3 +13,7 @@ extensions/notify.ts
 extensions/handoff.ts
   Taken from pi's extension examples (MIT, Copyright (c) earendil-works):
   https://pi.dev/docs/extensions
+
+themes/catppuccin-frappe.json
+  Taken from pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
+  https://github.com/madeleineostoja/pi-catppuccin/blob/main/themes/catppuccin-frappe.json

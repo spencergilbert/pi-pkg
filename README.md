@@ -57,7 +57,17 @@ _Add prompts in `prompts/` — see [Pi prompts docs](https://pi.dev/docs/prompts
 
 ## Themes
 
-_Add themes in `themes/` — see [Pi themes docs](https://pi.dev/docs/themes)._
+### catppuccin-frappe
+
+A soft, muted [Catppuccin](https://catppuccin.com) Frappé theme for the TUI, adapted from [pi-catppuccin](https://github.com/madeleineostoja/pi-catppuccin) with mauve as the accent, quiet surface/overlay chrome, and a gentle thinking gradient.
+
+Select it via `/settings` or:
+
+```json
+{
+  "theme": "catppuccin-frappe"
+}
+```
 
 ## Credits
 
