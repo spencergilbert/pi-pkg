@@ -80,7 +80,17 @@ See [skills/kagi/SKILL.md](skills/kagi/SKILL.md) for full usage.
 
 ## Prompts
 
-_Add prompts in `prompts/` — see [Pi prompts docs](https://pi.dev/docs/prompts)._
+### plan
+
+A lightweight discussion/planning mode for when you want to explore a problem space and narrow down an approach before any implementation. Enters a read-only thinking-partner stance: grounds the discussion in the codebase, asks only decision-relevant questions, sketches alternatives with trade-offs, and ends with a short concrete plan plus an explicit approval gate before any code is written.
+
+**Usage:**
+```text
+/plan <problem or idea>   start exploring a specific problem
+/plan                     ask what to explore
+```
+
+Other prompts live in `prompts/` — see [Pi prompts docs](https://pi.dev/docs/prompts).
 
 ## Themes
 
