@@ -1,6 +1,6 @@
 ---
 name: kagi
-description: Web search and content extraction via the Kagi Universal Search API. Use for searching documentation, facts, or any web content, and for extracting readable markdown from URLs. Requires 1Password CLI with a Kagi API key reference. Pure Node.js, no browser or npm dependencies.
+description: Web search and content extraction via the Kagi Universal Search API. Use for searching documentation, facts, or any web content, and for extracting readable markdown from URLs. Requires the KAGI_API_KEY environment variable. Pure Node.js, no browser or npm dependencies.
 ---
 
 # Kagi
@@ -11,12 +11,10 @@ Web search and page-content extraction using the Kagi API (v1). Lightweight — 
 
 1. Create an account at https://kagi.com — any paid plan includes API access.
 2. Create an API token at https://kagi.com/settings?p=api
-3. Store the token in 1Password (e.g. as a field on a "Kagi API" login item).
-4. Set the `KAGI_API_KEY_REF` environment variable to the 1Password reference:
+3. Export it in your shell environment:
    ```bash
-   export KAGI_API_KEY_REF="op://My 1Password/Kagi API/api_key"
+   export KAGI_API_KEY="..."
    ```
-   The scripts call `op read` to resolve the key at runtime. The secret never appears in a shell profile or environment dump.
 
 ## Search
 

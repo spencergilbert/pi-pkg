@@ -2,12 +2,9 @@
  * Shared helpers for Kagi API scripts.
  *
  * Environment:
- *   KAGI_API_KEY_REF  1Password reference for the API key,
- *                     e.g. op://My 1Password/Kagi API/api_key
- *   KAGI_API_URL      Override the API base URL (for testing)
+ *   KAGI_API_KEY  Kagi API key (required), from https://kagi.com/settings?p=api
+ *   KAGI_API_URL  Override the API base URL (for testing)
  */
-
-import { execFileSync } from "node:child_process";
 
 const API_BASE = process.env.KAGI_API_URL ?? "https://kagi.com/api/v1";
 
@@ -17,38 +14,17 @@ export function fail(msg, code = 1) {
 }
 
 /**
- * Resolve the Kagi API key from a 1Password reference.
- * KAGI_API_KEY_REF must be set to an op:// reference.
+ * Read the Kagi API key from the environment.
  */
 export function resolveApiKey() {
-	const ref = process.env.KAGI_API_KEY_REF;
-	if (!ref) {
+	const key = process.env.KAGI_API_KEY;
+	if (!key) {
 		fail(
-			"Error: KAGI_API_KEY_REF environment variable is required.\n" +
-			"Set it to a 1Password reference, e.g.:\n" +
-			"  export KAGI_API_KEY_REF='op://My 1Password/Kagi API/api_key'",
+			"Error: KAGI_API_KEY environment variable is required.\n" +
+			"Create a key at https://kagi.com/settings?p=api, then: \"export KAGI_API_KEY=...\"",
 		);
 	}
-
-	try {
-		const key = execFileSync("op", ["read", ref], {
-			encoding: "utf8",
-			stdio: ["ignore", "pipe", "pipe"],
-			timeout: 10_000,
-		}).trim();
-		if (!key) {
-			fail("Error: op read returned an empty value");
-		}
-		return key;
-	} catch (err) {
-		if (err.code === "ENOENT") {
-			fail("Error: 'op' not found on PATH. Install 1Password CLI: https://developer.1password.com/docs/cli/");
-		}
-		if (err.killed) {
-			fail("Error: timed out waiting for 'op read' (is 1Password signed in? try 'op account status')");
-		}
-		fail(`Error: failed to resolve API key from 1Password:\n  ${err.stderr?.trim() ?? err.message}`);
-	}
+	return key;
 }
 
 /**

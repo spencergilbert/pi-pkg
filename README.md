@@ -69,7 +69,7 @@ Derived from [mitsuhiko's goal extension](https://github.com/mitsuhiko/agent-stu
 
 ### kagi
 
-Web search and page-content extraction via the [Kagi API](https://kagi.com/api/docs) (v1). Pure Node.js, no browser or npm dependencies. Uses 1Password CLI (`op read`) to resolve the API key from a `KAGI_API_KEY_REF` environment variable.
+Web search and page-content extraction via the [Kagi API](https://kagi.com/api/docs) (v1). Pure Node.js, no browser or npm dependencies. Requires the `KAGI_API_KEY` environment variable (create a key at https://kagi.com/settings?p=api).
 
 ```bash
 skills/kagi/search.mjs "query" -n 5 --time week

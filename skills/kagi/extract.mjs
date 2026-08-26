@@ -13,7 +13,7 @@
  *   -h, --help    Show this help
  *
  * Environment:
- *   KAGI_API_KEY_REF  1Password reference, e.g. op://My 1Password/Kagi API/api_key
+ *   KAGI_API_KEY  Kagi API key (required)
  */
 
 import { existsSync, writeFileSync } from "node:fs";
@@ -30,7 +30,7 @@ Options:
   -h, --help    Show this help
 
 Environment:
-  KAGI_API_KEY_REF  1Password reference, e.g. op://My 1Password/Kagi API/api_key`);
+  KAGI_API_KEY  Kagi API key (required)`);
 }
 
 const args = process.argv.slice(2);
