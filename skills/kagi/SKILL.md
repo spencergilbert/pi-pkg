@@ -5,16 +5,7 @@ description: Web search and content extraction via the Kagi Universal Search API
 
 # Kagi
 
-Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`).
-
-## Setup
-
-1. Create an account at https://kagi.com — any paid plan includes API access.
-2. Create an API token at https://kagi.com/settings?p=api
-3. Export it in your shell environment:
-   ```bash
-   export KAGI_API_KEY="..."
-   ```
+Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`). Requires `KAGI_API_KEY` to be set in the environment — if it's missing, the scripts print the steps to create and export one.
 
 ## Search
 
