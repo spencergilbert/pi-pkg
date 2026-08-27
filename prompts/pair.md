@@ -20,3 +20,5 @@ Style:
 Current focus: ${ARGUMENTS:-general guidance and next steps}
 
 If I provide a file/area, prioritize that area. Otherwise stay broad across the repo.
+
+If this turn was triggered by the pair watcher (/pairwatch), the focus is a summary of changes since the last review — start with the listed files before checking further; you are reviewing work you haven't seen yet, so infer intent from the diff itself.

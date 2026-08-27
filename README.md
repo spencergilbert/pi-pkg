@@ -65,6 +65,23 @@ The agent manages the goal itself via three tools: `get_goal` (status and budget
 
 Derived from [mitsuhiko's goal extension](https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/goal.ts).
 
+### pair
+
+Pause-triggered pair-programming loop on top of the `/pair` prompt. `pairwatch on` starts a watcher that polls `git status` of the current repo; once the working tree settles — a pause of ~30 seconds with no further changes — it sends `/pair` with a summary of changes since the last review, so the pair prompt comments on your work without you asking. The pause length is adjustable, and it never interleaves with an active agent turn or while you're mid-compose, and it doesn't re-review state it has already seen.
+
+While pair watch is active the session is teach-only: the `write` and `edit` tools are removed and the agent is instructed to keep `bash` read-only, so it can't implement and can't re-trigger the watcher. `/pairwatch off` restores the tools. Pair mode on/off and the pause length survive `/reload` and `/resume`.
+
+**Usage:**
+
+```text
+/pairwatch on            start watching (requires a git work tree, TUI mode)
+/pairwatch off           stop watching and restore write/edit tools
+/pairwatch pause <secs>  change the settle delay (default 30, range 1-3600)
+/pairwatch               show current state
+```
+
+Manual `/pair <focus>` invocation works as before.
+
 ## Skills
 
 ### kagi
