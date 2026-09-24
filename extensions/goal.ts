@@ -393,6 +393,21 @@ export default function goalExtension(pi: ExtensionAPI) {
 	let activeSinceMs: number | null = null;
 	let activeGoalIdAtAgentStart: string | null = null;
 	let continuationQueued = false;
+	let statusTimer: ReturnType<typeof setInterval> | null = null;
+	let lastStatusText: string | undefined;
+
+	function stopStatusTicker(): void {
+		if (statusTimer) {
+			clearInterval(statusTimer);
+			statusTimer = null;
+		}
+	}
+
+	function startStatusTicker(ctx: ExtensionContext): void {
+		if (statusTimer) return;
+		statusTimer = setInterval(() => updateStatus(ctx), 1000);
+		statusTimer.unref?.();
+	}
 
 	function currentGoalSnapshot(): Goal | null {
 		if (!goal) return null;
@@ -421,12 +436,8 @@ export default function goalExtension(pi: ExtensionAPI) {
 		} satisfies PersistedGoalState);
 	}
 
-	function updateStatus(ctx: ExtensionContext): void {
-		if (!ctx.hasUI) return;
-		if (!goal) {
-			ctx.ui.setStatus("goal", undefined);
-			return;
-		}
+	function goalStatusText(ctx: ExtensionContext): string | undefined {
+		if (!goal) return undefined;
 		const theme = ctx.ui.theme;
 		switch (goal.status) {
 			case "active": {
@@ -434,25 +445,32 @@ export default function goalExtension(pi: ExtensionAPI) {
 				const usage = snapshot.tokenBudget === undefined
 					? ` (${formatElapsedSeconds(snapshot.timeUsedSeconds)})`
 					: ` (${formatTokensCompact(snapshot.tokensUsed)} / ${formatTokensCompact(snapshot.tokenBudget)})`;
-				ctx.ui.setStatus("goal", theme.fg("accent", `Pursuing goal${usage}`));
-				break;
+				return theme.fg("accent", `Pursuing goal${usage}`);
 			}
 			case "paused":
-				ctx.ui.setStatus("goal", theme.fg("warning", "Goal paused (/goal resume)"));
-				break;
+				return theme.fg("warning", "Goal paused (/goal resume)");
 			case "blocked":
-				ctx.ui.setStatus("goal", theme.fg("warning", "Goal blocked (/goal resume)"));
-				break;
+				return theme.fg("warning", "Goal blocked (/goal resume)");
 			case "usageLimited":
-				ctx.ui.setStatus("goal", theme.fg("warning", "Goal hit usage limits (/goal resume)"));
-				break;
+				return theme.fg("warning", "Goal hit usage limits (/goal resume)");
 			case "budgetLimited":
-				ctx.ui.setStatus("goal", theme.fg("warning", "Goal budget reached"));
-				break;
+				return theme.fg("warning", "Goal budget reached");
 			case "complete":
-				ctx.ui.setStatus("goal", theme.fg("success", "Goal complete"));
-				break;
+				return theme.fg("success", "Goal complete");
 		}
+	}
+
+	function updateStatus(ctx: ExtensionContext): void {
+		if (!ctx.hasUI) return;
+		if (goal?.status === "active") {
+			startStatusTicker(ctx);
+		} else {
+			stopStatusTicker();
+		}
+		const text = goalStatusText(ctx);
+		if (text === lastStatusText) return;
+		lastStatusText = text;
+		ctx.ui.setStatus("goal", text);
 	}
 
 	function showGoalMessage(content: string): void {
@@ -568,6 +586,8 @@ export default function goalExtension(pi: ExtensionAPI) {
 	}
 
 	function reconstructState(ctx: ExtensionContext): void {
+		stopStatusTicker();
+		lastStatusText = undefined;
 		goal = null;
 		activeSinceMs = null;
 		activeGoalIdAtAgentStart = null;
@@ -586,6 +606,7 @@ export default function goalExtension(pi: ExtensionAPI) {
 
 	pi.on("session_start", async (_event, ctx) => reconstructState(ctx));
 	pi.on("session_tree", async (_event, ctx) => reconstructState(ctx));
+	pi.on("session_shutdown", async () => stopStatusTicker());
 
 	pi.on("before_agent_start", async (event) => {
 		const snapshot = currentGoalSnapshot();
