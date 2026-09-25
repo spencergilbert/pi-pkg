@@ -135,6 +135,14 @@ While pair watch is active the session is teach-only: the `write` and `edit` too
 
 Manual `/pair <focus>` invocation works as before.
 
+### tool-guidance (experimental)
+
+Adds "prefer the dedicated tool over bash" guidelines for the `grep`, `find`, and `ls` tools, the same way `read` already says "Use read to examine files instead of cat or sed". Those three built-ins ship with no guidelines, so nothing steers the model away from bash `grep`/`rg`, `find`/`fd`, and `ls` — the dedicated tools respect `.gitignore` and `grep` returns line numbers.
+
+Always on; no usage or flags. It patches the system prompt's Guidelines section via `before_agent_start` rather than re-registering the tools, so it composes with execution-overriding extensions such as `ssh`.
+
+Still experimental — a local stopgap while the equivalent one-line additions are proposed upstream for the built-in tool definitions.
+
 ## Skills
 
 ### kagi

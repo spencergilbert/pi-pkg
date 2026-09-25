@@ -227,6 +227,12 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
   `node_modules` blowups) and `grep` returns line numbers.
 - Upstream PR to add the same one-liners to the built-in tool definitions.
 
+### Status
+- **Experimental local stopgap shipped**: `extensions/tool-guidance.ts` adds
+  the three guidelines via the mutable `systemPromptOptions.toolGuidelines` of
+  `before_agent_start` (not by re-registering tools, which would clobber
+  `ssh`'s remote-routed `execute`). Being tested ahead of the upstream PR.
+
 ---
 
 ## Done / already handled
