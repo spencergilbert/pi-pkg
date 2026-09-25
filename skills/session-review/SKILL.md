@@ -63,6 +63,57 @@ Loose and intentionally small; extra fields may be added later, so ignore what y
 {baseDir}/session-report.mjs --since 30d --errors-only | jq -r '[.tool, .err] | @tsv'
 ```
 
+## Beyond tool calls
+
+The script emits tool calls only. For tokens, cost, model attribution, or what
+the prompt actually contained, read the session JSONL directly — one JSON object
+per line, in `$PI_CODING_AGENT_SESSION_DIR` (default `~/.local/state/pi/sessions`).
+
+| path | meaning |
+|---|---|
+| `message.role` | `user` / `assistant` / `system` / `toolResult` |
+| `message.model`, `message.provider`, `message.api` | set on assistant messages; use to attribute calls or tokens to a model |
+| `message.usage.{input,output,cacheRead,cacheWrite,totalTokens}` | token counts |
+| `message.usage.cost.total` | cost, priced from the catalog when the message was written |
+| `message.stopReason` | `stop` / `toolUse` / `aborted` / `error`; `message.errorMessage` carries text on the last two |
+| `message.timestamp` | **epoch ms** — the entry's own `timestamp` is ISO |
+| `message.sections.{preamble,tools,rules,docs,project_context,skills,cwd}` | the system prompt, on `role: "system"` messages |
+
+```bash
+# tokens and notional cost by model, most-used first
+jq -r 'select(.type=="message" and .message.role=="assistant" and .message.usage)
+  | [.message.model, (.message.usage.input//0), (.message.usage.output//0),
+     (.message.usage.cacheRead//0), (.message.usage.totalTokens//0),
+     (.message.usage.cost.total//0)] | @tsv' \
+  ~/.local/state/pi/sessions/*.jsonl \
+| awk -F'\t' '{c[$1]++; i[$1]+=$2; o[$1]+=$3; r[$1]+=$4; n[$1]+=$5; t[$1]+=$6}
+    END{for (m in c) printf "%-28s %6d %10d %9d %12d %12d  $%8.2f\n",
+      m, c[m], i[m], o[m], r[m], n[m], t[m]}' \
+| sort -k6 -rn
+
+# did a given guideline / extension line actually reach this session?
+jq -r 'select(.type=="message" and .message.role=="system")
+  | .message.sections.rules // ""' <file>.jsonl | grep -c "Use grep instead of bash"
+```
+
+Gotchas:
+
+- **A session has several system messages** — one per agent start, model change,
+  or reload (1–4 observed). To decide "was X active", check all of them, and note
+  the prompt can change mid-session.
+- **`usage` keys are not fixed.** Three shapes observed: with `reasoning`,
+  without it, and with `cacheWrite1h`. Read keys defensively instead of summing a
+  hardcoded set.
+- **`usage.cost.total` is priced from the catalog at write time**, is `0` for
+  subscription providers, and moves if the catalog changes. Tokens are the stable
+  unit.
+- **`--since 30d` is a rolling now-minus-30d cutoff**, not a calendar date, so a
+  hand-rolled cutoff will differ by a session or two.
+- **`--args` clips strings at 200 chars** (`--arg-bytes` to raise). First-token
+  analysis is unaffected; long-command analysis is not.
+- Entry types besides `message`: `session`, `model_change`,
+  `thinking_level_change`, `custom`, `custom_message`, `compaction`.
+
 ## Interpret
 
 Read the numbers, then propose **3–5 ordered, evidence-backed** improvements. Cite counts, examples, and timestamps; prefer changes the data supports and say what you ruled out.

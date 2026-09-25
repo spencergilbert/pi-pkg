@@ -166,7 +166,7 @@ skills/session-review/session-report.mjs --since 30d --tool mcp,fetch | jq -r .t
 skills/session-review/session-report.mjs --since 7d --errors-only --args
 ```
 
-See [skills/session-review/SKILL.md](skills/session-review/SKILL.md) for fields, `jq` recipes, and how to interpret the results.
+See [skills/session-review/SKILL.md](skills/session-review/SKILL.md) for fields, `jq` recipes, how to read the raw session log, and how to interpret the results.
 
 ## Prompts
 
