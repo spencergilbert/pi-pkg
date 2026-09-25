@@ -207,11 +207,17 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
 **Priority: high leverage for the effort. Genuinely unclaimed upstream.**
 
 ### Evidence
-- grep tool 48 vs bash leading `rg`/`grep` 177 (~3.7×).
-- ls tool 28 vs bash leading `ls` 164 (~5.9×).
-- find tool 4 vs bash leading `find`/`fd` 30 (~7.5×).
+Measured 2026-09-25 over the 30d window with the recipe under Status:
+- grep tool 48 vs bash leading `grep` **1,665** (~34.7×). `rg` never leads a
+  bash call.
+- ls tool 31 vs bash leading `ls` **375** (~12.1×).
+- find tool 4 vs bash leading `find` **55** (~13.8×). `fd` never leads a bash
+  call.
 - `dist/core/tools/{grep,find,ls}.js` have `guidelines: []`; only `read`
   ("Use read instead of cat or sed") and `write` carry any.
+- **Correction:** the first pass recorded 177/164/30 for the bash-leading
+  counts. Re-running the same recipe on the same window gives 1,665/375/55, so
+  the underuse is ~4-9× worse than first recorded.
 
 ### Upstream
 - No issue found about adding preference guidelines for these tools. Related
@@ -234,10 +240,22 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
   `before_agent_start` (not by re-registering tools, which would clobber
   `ssh`'s remote-routed `execute`). Committed `bfa9a50`; being tested ahead of
   the upstream PR.
+- **No duplicate-guidelines bug** (checked 2026-09-25): an earlier pass thought
+  each line rendered twice, but that was an artifact of `--mode json` emitting
+  the system prompt as both `message_start` and `message_end`. Session logs show
+  exactly one occurrence per system message, and
+  `normalizeBuildSystemPromptOptions` rebuilds `toolGuidelines` as a fresh array
+  on every `before_agent_start`, so the handler cannot accumulate. No guard
+  needed, and nothing grows with session length.
 - **Verify later with the `session-review` skill.** Baseline over the 30d to
-  2026-09-25: grep 48 vs bash-leading 177, ls 28 vs 164, find 4 vs 30. Re-run
-  after a couple of weeks and look for the dedicated counts rising while the
-  bash-leading counts fall and grep/find/ls error rates stay flat.
+  2026-09-25: grep 48 vs bash-leading `grep` 1,665, ls 31 vs 375, find 4 vs 55.
+  Re-run after a couple of weeks and look for the dedicated counts rising while
+  the bash-leading counts fall and grep/find/ls error rates stay flat.
+- **Coverage as of 2026-09-25 is too thin to read.** Only 5 sessions carry the
+  guideline in the system prompt, and in 4 of them it arrived mid-session (model
+  change/reload) rather than at the start. Those 5 are also bash-heavy
+  `qwen3.8-flash` sessions (689 of 881 tool calls were bash), so they are not a
+  representative sample. No verdict yet.
 
   ```bash
   # dedicated-tool calls
