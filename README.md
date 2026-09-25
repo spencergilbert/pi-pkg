@@ -168,15 +168,20 @@ See [skills/kagi/SKILL.md](skills/kagi/SKILL.md) for full usage, and [skills/kag
 
 ### session-review
 
-Reviews past Pi session logs and turns them into evidence-backed improvements. `session-report.mjs` reads Pi's v3 session JSONL and prints one loose JSON object per tool call (`ts`, `session`, `project`, `tool`, `ok`, `bytes`, `msg`, plus opt-in `args`/`details`/`err`), then you slice it with `jq` — counts, error rates, large outputs, fan-out, repeated calls. It does no aggregation and no domain-specific analysis, and it fails loudly with `file:line` on invalid JSON, a non-v3 header, malformed entries, or a result for an unknown call. Explicit invocation only: run the script directly, or ask an agent via `/skill:session-review`.
+Reviews past Pi session logs and turns them into evidence-backed improvements. `session-report.mjs` reads Pi's v3 session JSONL and prints one loose JSON object per tool call (`ts`, `session`, `project`, `tool`, `ok`, `bytes`, `msg`, plus opt-in `args`/`details`/`err`), or — with `--usage` — one object per model-attributed usage event (`kind`, `model`, `provider`, token counts, `cost`, `calls`, `stop`), which is how you trend tokens, cost, aborts, and compaction instead of hand-rolling jq over the raw log. Then you slice it with `jq` — counts, error rates, large outputs, fan-out, repeated calls, monthly cost. It does no aggregation and no domain-specific analysis, and it fails loudly with `file:line` on invalid JSON, a non-v3 header, malformed entries, or a result for an unknown call.
+
+Pi never prunes sessions, so the analyzer assumes a growing corpus: `--since` skips whole session files whose mtime predates the cutoff (append-only logs make mtime a sound upper bound), `--usage` streams records as they parse so memory stays flat, and `--stats` reports files read, files skipped, rows, and elapsed time. Full history is under a second either way. Explicit invocation only: run the script directly, or ask an agent via `/skill:session-review`.
 
 ```bash
 skills/session-review/session-report.mjs --since 30d
 skills/session-review/session-report.mjs --since 30d --tool mcp,fetch | jq -r .tool | sort | uniq -c
 skills/session-review/session-report.mjs --since 7d --errors-only --args
+skills/session-review/session-report.mjs --usage --stats          # one row per billed turn
+skills/session-review/session-report.mjs --since 30d --usage \
+  | jq -n 'reduce inputs as $u ({}; .[$u.model // "?"] = ((.[$u.model // "?"] // 0) + ($u.total // 0))) | to_entries'
 ```
 
-See [skills/session-review/SKILL.md](skills/session-review/SKILL.md) for fields, `jq` recipes, how to read the raw session log, and how to interpret the results.
+Docs are layered so an agent only pays for what the question needs: [SKILL.md](skills/session-review/SKILL.md) covers tool-call records — fields, `jq` recipes, long-history behavior, reading the raw log for prompt content, and how to interpret results — and [usage-records.md](skills/session-review/usage-records.md) holds the `--usage` schema, its recipes, and its gotchas for token/cost/model questions. Both layers, and this entry, are meant to change together.
 
 ## Prompts
 

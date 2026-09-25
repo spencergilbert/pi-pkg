@@ -2,12 +2,18 @@
 /**
  * session-report.mjs — normalize Pi session logs into a loose JSONL stream.
  *
- * Reads Pi's v3 session JSONL, joins each tool call with its result, and
- * prints one JSON object per tool call. It deliberately does no aggregation
- * beyond a few filters: pipe the output into `jq` (or anything else) to slice
- * it however the current question needs.
+ * Reads Pi's v3 session JSONL and prints one JSON object per tool call, joining
+ * each call with its result. It deliberately does no aggregation beyond a few
+ * filters: pipe the output into `jq` (or anything else) to slice it however the
+ * current question needs.
  *
- * Output fields (loose — extra fields may be added; ignore what you don't use):
+ * `--usage` switches the record type: one object per model-attributed usage
+ * event (assistant message, `usage` entry, or compaction) instead of per tool
+ * call. That is the normalizer for token/cost/model questions, so they stop
+ * being ad-hoc jq over 100 MB of raw log. The two modes never mix in one stream.
+ *
+ * Tool-call record fields (loose — extra fields may be added; ignore what you
+ * don't use):
  *   ts       ISO timestamp of the assistant message that requested the call
  *   session  session id
  *   project  working directory the session ran in
@@ -19,13 +25,32 @@
  *   args     tool arguments, only with --args (long strings clipped)
  *   details  result details, only with --details (long strings clipped)
  *
+ * --usage record fields:
+ *   ts, session, project   as above
+ *   kind                   "assistant" | "usage" | "compaction"
+ *   model, provider, api   model attribution (see the inheritance note below)
+ *   input, output, reasoning, cacheRead, cacheWrite, cacheWrite1h, total
+ *                          token counts, copied from message.usage; `reasoning`
+ *                          is already inside `output`, and absent keys stay
+ *                          absent rather than becoming 0
+ *   cost                   usage.cost.total, catalog-priced at write time
+ *   calls                  tool calls requested by this message (assistant only)
+ *   stop, err              stopReason, and errorMessage when it errored/aborted
+ *   op, tokensBefore       kind-specific: usage entry `kind`, tokens summarized
+ *
  * It fails loudly rather than guessing: invalid JSON, a non-v3 header, a
- * malformed assistant message/tool call, or a result for an unknown call id
- * abort with a `file:line` message and a non-zero exit. Unknown entry types
- * and unknown fields are ignored.
+ * malformed assistant message/tool call, a result for an unknown call id, or a
+ * `usage` entry with no `usage` object abort with a `file:line` message and a
+ * non-zero exit. Unknown entry types and unknown fields are ignored. Compaction
+ * entries with no `usage` are a legitimate absence and are simply not emitted.
+ *
+ * Scale notes: `--since` skips session files whose mtime predates the cutoff
+ * (append-only files make that sound, with slack), and `--usage` writes each
+ * record as it parses, so neither the read nor the memory cost grows with the
+ * age of the history. `--stats` reports what was read, skipped, and emitted.
  */
 
-import { closeSync, createReadStream, existsSync, fstatSync, openSync, readdirSync, readSync } from "node:fs";
+import { closeSync, createReadStream, existsSync, fstatSync, openSync, readdirSync, readSync, statSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { homedir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
@@ -33,6 +58,11 @@ import { basename, join, resolve, sep } from "node:path";
 const SESSION_VERSION = 3;
 const DEFAULT_ARG_BYTES = 200;
 const ERR_MAX_CHARS = 200;
+const USAGE_TOKEN_KEYS = ["input", "output", "cacheRead", "cacheWrite", "cacheWrite1h", "reasoning"];
+// Session files are append-only, so no entry can be newer than the file's last
+// write — which lets `--since` skip whole files unread. The slack covers clock
+// changes and restores, where an mtime can land behind the entries it holds.
+const MTIME_SLACK_MS = 24 * 3_600_000;
 
 class Fail extends Error {}
 
@@ -44,7 +74,8 @@ built in; aggregation is left to jq.
 Options:
   --dir <path>        session directory (default: $PI_CODING_AGENT_SESSION_DIR,
                       else ~/.local/state/pi/sessions, else ~/.pi/agent/sessions)
-  --since <when>      only calls at/after <when>: 30d, 12h, 2w, or an ISO date
+  --since <when>      only records at/after <when>: 30d, 12h, 2w, or an ISO date
+                      (session files older than the cutoff are skipped unread)
   --tool <a,b>        only these tool names (comma-separated)
   --project <path>    only sessions in this directory or below it
   --session <id>      only this session id (exact or prefix)
@@ -53,6 +84,11 @@ Options:
   --details           include result details (long strings clipped)
   --arg-bytes <n>     clip strings longer than n chars (default ${DEFAULT_ARG_BYTES})
   --allow-dangling    tolerate results whose call was never seen
+  --usage             emit usage records (per message/compaction) instead of
+                      tool-call records; --tool/--errors-only/--args/
+                      --details/--arg-bytes/--allow-dangling do not apply
+  --stats             write a summary line to stderr (files read, files skipped
+                      by mtime, records emitted, elapsed ms)
   -h, --help          show this help
 `;
 
@@ -82,6 +118,8 @@ function parseArgs(argv) {
     includeDetails: false,
     argBytes: DEFAULT_ARG_BYTES,
     allowDangling: false,
+    usage: false,
+    stats: false,
     help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -107,17 +145,41 @@ function parseArgs(argv) {
         break;
       }
       case "--allow-dangling": opts.allowDangling = true; break;
+      case "--usage": opts.usage = true; break;
+      case "--stats": opts.stats = true; break;
       case "--help": case "-h": opts.help = true; break;
       default: throw new Fail(`unknown option: ${arg}`);
     }
   }
+  if (opts.usage) {
+    const toolOnly = [];
+    if (opts.tools) toolOnly.push("--tool");
+    if (opts.errorsOnly) toolOnly.push("--errors-only");
+    if (opts.includeArgs) toolOnly.push("--args");
+    if (opts.includeDetails) toolOnly.push("--details");
+    if (opts.argBytes !== DEFAULT_ARG_BYTES) toolOnly.push("--arg-bytes");
+    if (opts.allowDangling) toolOnly.push("--allow-dangling");
+    if (toolOnly.length) {
+      throw new Fail(`${toolOnly.join(", ")} select on tool-call records, not message records`
+        + " (drop --usage, or drop the option)");
+    }
+  }
   return opts;
+}
+
+function isDirectory(path) {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 function resolveSessionDir(explicit) {
   if (explicit !== undefined) {
     const path = resolve(explicit);
     if (!existsSync(path)) throw new Fail(`session dir not found: ${path}`);
+    if (!isDirectory(path)) throw new Fail(`--dir expects a directory of .jsonl files, got a file: ${path}`);
     return path;
   }
   const candidates = [
@@ -126,9 +188,36 @@ function resolveSessionDir(explicit) {
     join(homedir(), ".pi/agent/sessions"),
   ].filter((candidate) => typeof candidate === "string" && candidate.length > 0);
   for (const candidate of candidates) {
-    if (existsSync(candidate)) return resolve(candidate);
+    if (isDirectory(candidate)) return resolve(candidate);
   }
   throw new Fail(`no session dir found (tried ${candidates.join(", ")}); pass --dir`);
+}
+
+/**
+ * Whether a file cannot possibly contain a record inside the cutoff. Sound
+ * because session files are only ever appended to; the slack in
+ * MTIME_SLACK_MS is what makes a copied, restored, or clock-shifted file safe —
+ * it is read rather than skipped. Only valid with `--since`.
+ */
+function olderThanCutoff(file, since) {
+  let mtimeMs;
+  try {
+    mtimeMs = statSync(file).mtimeMs;
+  } catch {
+    return false; // unreadable metadata: read the file and let it fail loudly
+  }
+  return mtimeMs + MTIME_SLACK_MS < since.getTime();
+}
+
+/** Recursively collect session files; pi nests them by cwd in some layouts. */
+function listSessionFiles(dir) {
+  const found = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) found.push(...listSessionFiles(path));
+    else if (entry.name.endsWith(".jsonl")) found.push(path);
+  }
+  return found.sort();
 }
 
 /** Whether the file ends in a newline — a partial trailing line means a live writer. */
@@ -157,6 +246,15 @@ function clipStrings(value, max) {
   return value;
 }
 
+/** Copy only the numbers that exist, so absent usage keys stay absent. */
+function copyUsage(target, usage) {
+  for (const key of USAGE_TOKEN_KEYS) {
+    if (typeof usage[key] === "number") target[key] = usage[key];
+  }
+  if (typeof usage.totalTokens === "number") target.total = usage.totalTokens;
+  if (usage.cost && typeof usage.cost.total === "number") target.cost = usage.cost.total;
+}
+
 function passes(record, opts) {
   if (opts.tools && !opts.tools.has(record.tool)) return false;
   if (opts.errorsOnly && record.ok !== false) return false;
@@ -174,7 +272,24 @@ function passes(record, opts) {
   return true;
 }
 
-async function processFile(file, opts, out) {
+/** Assemble one --usage record; only fields that exist are emitted. */
+function buildUsageRecord(f) {
+  const record = { ts: f.ts, session: f.session, project: f.project, kind: f.kind };
+  if (f.model !== undefined) record.model = f.model;
+  if (f.provider !== undefined) record.provider = f.provider;
+  if (f.api !== undefined) record.api = f.api;
+  if (f.op !== undefined) record.op = f.op;
+  if (typeof f.tokensBefore === "number") record.tokensBefore = f.tokensBefore;
+  if (f.usage) copyUsage(record, f.usage);
+  if (typeof f.calls === "number") record.calls = f.calls;
+  if (typeof f.stop === "string") record.stop = f.stop;
+  if (typeof f.errorMessage === "string" && f.errorMessage.trim()) {
+    record.err = f.errorMessage.replace(/\s+/g, " ").trim().slice(0, ERR_MAX_CHARS);
+  }
+  return record;
+}
+
+async function processFile(file, opts, out, stats) {
   const trailingComplete = endsWithNewline(file);
   const lines = createInterface({ input: createReadStream(file, "utf8"), crlfDelay: Infinity });
 
@@ -183,9 +298,20 @@ async function processFile(file, opts, out) {
   let sessionId;
   let project;
   let msgIndex = 0;
+  let lastModel;
+  let lastProvider;
   const seenCalls = new Set();
   const calls = new Map();
   const order = [];
+
+  /** --usage streams straight out: there is no join to wait for, so memory stays flat. */
+  const emitUsage = (fields) => {
+    const record = buildUsageRecord(fields);
+    if (passes(record, opts)) {
+      out.write(`${JSON.stringify(record)}\n`);
+      stats.emitted += 1;
+    }
+  };
 
   for await (const line of lines) {
     lineNo += 1;
@@ -212,6 +338,41 @@ async function processFile(file, opts, out) {
       continue;
     }
 
+    // Usage accounting is not a message; pi stamps model on it, or inherits the
+    // last one seen in the file when it does not.
+    if (entry?.type === "usage") {
+      if (opts.usage) {
+        if (!entry.usage || typeof entry.usage !== "object") {
+          throw new Fail(`${file}:${lineNo}: usage entry carries no usage object`);
+        }
+        emitUsage({
+          ts: entry.timestamp, session: sessionId, project, kind: "usage",
+          model: typeof entry.model === "string" ? entry.model : lastModel,
+          provider: typeof entry.provider === "string" ? entry.provider : lastProvider,
+          op: typeof entry.kind === "string" ? entry.kind : undefined,
+          usage: entry.usage,
+        });
+      }
+      continue;
+    }
+
+    if (entry?.type === "compaction") {
+      if (opts.usage && entry.usage && typeof entry.usage === "object") {
+        emitUsage({
+          ts: entry.timestamp, session: sessionId, project, kind: "compaction",
+          model: lastModel, provider: lastProvider,
+          tokensBefore: entry.tokensBefore, usage: entry.usage,
+        });
+      }
+      continue;
+    }
+
+    if (entry?.type === "model_change") {
+      if (typeof entry.modelId === "string") lastModel = entry.modelId;
+      if (typeof entry.provider === "string") lastProvider = entry.provider;
+      continue;
+    }
+
     if (entry?.type !== "message") continue;
     const message = entry.message;
     if (!message || typeof message !== "object") continue;
@@ -222,6 +383,22 @@ async function processFile(file, opts, out) {
       }
       msgIndex += 1;
       const ts = typeof entry.timestamp === "string" ? entry.timestamp : undefined;
+      if (typeof message.model === "string") lastModel = message.model;
+      if (typeof message.provider === "string") lastProvider = message.provider;
+
+      if (opts.usage) {
+        emitUsage({
+          ts, session: sessionId, project, kind: "assistant",
+          model: typeof message.model === "string" ? message.model : lastModel,
+          provider: typeof message.provider === "string" ? message.provider : lastProvider,
+          api: typeof message.api === "string" ? message.api : undefined,
+          usage: message.usage && typeof message.usage === "object" ? message.usage : undefined,
+          calls: message.content.filter((block) => block?.type === "toolCall").length,
+          stop: message.stopReason,
+          errorMessage: message.errorMessage,
+        });
+        continue;
+      }
       for (const block of message.content) {
         if (!block || block.type !== "toolCall") continue;
         if (typeof block.id !== "string" || typeof block.name !== "string") {
@@ -249,7 +426,7 @@ async function processFile(file, opts, out) {
       continue;
     }
 
-    if (message.role === "toolResult") {
+    if (message.role === "toolResult" && !opts.usage) {
       const id = message.toolCallId;
       if (typeof id !== "string") {
         throw new Fail(`${file}:${lineNo}: toolResult is missing a string toolCallId`);
@@ -276,7 +453,10 @@ async function processFile(file, opts, out) {
   if (!headerSeen) throw new Fail(`${file}: missing session header`);
 
   for (const record of order) {
-    if (passes(record, opts)) out.write(`${JSON.stringify(record)}\n`);
+    if (passes(record, opts)) {
+      out.write(`${JSON.stringify(record)}\n`);
+      stats.emitted += 1;
+    }
   }
 }
 
@@ -292,10 +472,22 @@ async function main() {
     return;
   }
   const dir = resolveSessionDir(opts.dir);
-  const files = readdirSync(dir).filter((name) => name.endsWith(".jsonl")).sort();
-  if (files.length === 0) throw new Fail(`no .jsonl session files in ${dir}`);
+  const files = listSessionFiles(dir);
+  if (files.length === 0) throw new Fail(`no .jsonl session files under ${dir}`);
+  const started = performance.now();
+  const stats = { emitted: 0, skipped: 0 };
   for (const file of files) {
-    await processFile(join(dir, file), opts, process.stdout);
+    if (opts.since && olderThanCutoff(file, opts.since)) {
+      stats.skipped += 1;
+      continue;
+    }
+    await processFile(file, opts, process.stdout, stats);
+  }
+  if (opts.stats) {
+    process.stderr.write(
+      `session-report: ${files.length - stats.skipped} file(s) read, ${stats.skipped} skipped by mtime, `
+      + `${stats.emitted} ${opts.usage ? "usage" : "tool-call"} record(s) in ${Math.round(performance.now() - started)}ms\n`,
+    );
   }
 }
 
