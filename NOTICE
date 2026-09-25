@@ -22,6 +22,12 @@ themes/catppuccin-frappe.json
   Taken from pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
   https://github.com/madeleineostoja/pi-catppuccin/blob/main/themes/catppuccin-frappe.json
 
+skills/github/SKILL.md
+  Derived from mitsuhiko's agent-stuff (Apache-2.0):
+  https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md
+  Modified: states the auth rationale, the repo-targeting, output-projection,
+  CI-log, gh api, and write-confirmation habits; defers details to gh --help.
+
 skills/kagi/{search,extract}.mjs
   CLI structure inspired by badlogic's pi-skills brave-search (MIT, Copyright (c) 2024 Mario Zechner):
   https://github.com/badlogic/pi-skills/blob/main/brave-search/search.js

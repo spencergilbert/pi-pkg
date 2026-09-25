@@ -145,6 +145,16 @@ Still experimental — a local stopgap while the equivalent one-line additions a
 
 ## Skills
 
+### github
+
+Routes GitHub work — issues, PRs, CI runs, releases, search, API queries — through the [`gh`](https://cli.github.com) CLI instead of `curl https://api.github.com/... | python3`, which is unauthenticated (60/hour versus 5000), blind to private repos, and re-implements the `--json`/`--jq` the CLI already ships. It states the few habits that change agent behaviour — explicit `--repo`, projected output, `--log-failed`, `gh api` for the gaps, confirmation before writes — and leaves the details to `gh <command> --help`. Auto-loaded for github.com tasks, or `/skill:github`.
+
+See [skills/github/SKILL.md](skills/github/SKILL.md) and [skills/github/README.md](skills/github/README.md) for `gh` install/auth setup, including headless and remote hosts.
+
+Derived from [mitsuhiko's agent-stuff GitHub skill](https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md), narrowed to guidance over an example catalogue.
+
+Derived from [mitsuhiko's agent-stuff `skills/github`](https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md), expanded with the issue/PR/CI/search/release/API recipes above.
+
 ### kagi
 
 Web search and page-content extraction via the [Kagi API](https://kagi.com/api/docs) (v1). Pure Node.js, no browser or npm dependencies. The API key is read from the OS keyring at call time — GNOME Keyring via `secret-tool`, or the macOS Keychain.
