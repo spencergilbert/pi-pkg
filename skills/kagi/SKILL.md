@@ -7,12 +7,14 @@ description: Web search and content extraction via the Kagi Universal Search API
 
 Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`). The API key is read from the OS keyring at call time; if it is missing, the scripts fail with the coordinates to store and point at `README.md` in this directory.
 
+Paths below are relative to this skill's directory. Run them from there, or prefix them with the skill's location pi advertises in its system prompt.
+
 ## Search
 
 ```bash
-{baseDir}/search.mjs "query"                        # Basic search (10 results)
-{baseDir}/search.mjs "query" -n 5                   # Fewer results
-{baseDir}/search.mjs "query" --time week            # Results from the last week
+./search.mjs "query"                         # Basic search (10 results)
+./search.mjs "query" -n 5                   # Fewer results
+./search.mjs "query" --time week            # Results from the last week
 ```
 
 ### Options
@@ -24,10 +26,10 @@ Web search and page-content extraction using the Kagi API (v1). Lightweight — 
 ## Extract Page Content
 
 ```bash
-{baseDir}/extract.mjs https://example.com/article   # Markdown to stdout
-{baseDir}/extract.mjs https://a.com https://b.com   # Up to 10 URLs at once
-{baseDir}/extract.mjs https://a.com --out article.md # Write to file
-{baseDir}/extract.mjs https://a.com --out article.md --force  # Overwrite existing
+./extract.mjs https://example.com/article    # Markdown to stdout
+./extract.mjs https://a.com https://b.com    # Up to 10 URLs at once
+./extract.mjs https://a.com --out article.md # Write to file
+./extract.mjs https://a.com --out article.md --force  # Overwrite existing
 ```
 
 Extracts readable content as markdown from up to 10 HTTPS URLs in a single request.
