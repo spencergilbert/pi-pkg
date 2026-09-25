@@ -6,7 +6,7 @@
  * files instead of cat or sed"). Those three ship with `guidelines: []`, so
  * without this nothing steers the model away from bash `grep`/`rg`,
  * `find`/`fd`, and `ls` - which is exactly the underuse surfaced by the
- * session review (grep 3.7x, ls 5.9x, find 7.5x more often via bash).
+ * session review (grep 34.7x, ls 12.1x, find 13.8x more often via bash).
  *
  * This is an experimental local stopgap while the one-line additions are
  * proposed upstream for the built-in tool definitions.
