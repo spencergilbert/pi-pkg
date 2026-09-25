@@ -253,6 +253,62 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
 
 ---
 
+## 6. Provider-native (server-side) tools — upstream NOT_PLANNED; extension is the only route
+
+**Priority: low. Blocked upstream by design; the sanctioned path is an extension.**
+
+### What
+Providers increasingly ship server-executed tools declared in the request's
+`tools` array — QwenCloud `{"type":"web_search"}` / `code_interpreter` /
+`web_extractor` (Responses API only), Anthropic `web_search_20250305`, DeepSeek
+V4 Flash `web_search`, GLM coding-plan search via the Responses proxy. pi cannot
+reach any of them: `registerTool` has no provider-native option
+(`ToolDefinition` exposes only `constrainedSampling`, `renderShell`,
+`prepareArguments`, execution mode), and the transports emit only
+`type:"function"` tools.
+
+### Evidence (our runs, 2026-09-25)
+- `opencode-go` Responses API (`POST https://opencode.ai/zen/go/v1/responses`)
+  with `tools:[{"type":"web_search"}]`: `deepseek-v4.1-flash` → HTTP 200 but
+  **no search executed** (`output_types: ["reasoning","message"]`, no
+  `search_results`, no annotations); `qwen3.8-flash` and `kimi-k2.6` → 503
+  "Endpoint is unavailable". [#8661](https://github.com/earendil-works/pi/issues/8661)
+  reports a real `search_results` item with `grok-4.5`, so it is model/upstream
+  dependent — verify per model before building anything.
+- pi's Responses adapter hardcodes `annotations: []` on outgoing items and never
+  reads incoming ones; no `web_search_call` / `code_interpreter_call` handling.
+- `before_provider_request` **is** wired into the coding agent as
+  `onPayload: transformProviderPayload`, and a handler returning a payload
+  replaces the request body — that is the injection point.
+
+### Upstream
+- [#7704](https://github.com/earendil-works/pi/issues/7704) "support server-side
+  builtin tools in OpenAI Responses compat" — **closed NOT_PLANNED**. Maintainer:
+  *"server side tools are not transferable between providers, and also generate
+  transcript entries that can not be interpreted by other providers. not planned."*
+- Also closed: [#1324](https://github.com/earendil-works/pi/issues/1324),
+  [#1740](https://github.com/earendil-works/pi/issues/1740),
+  [#4955](https://github.com/earendil-works/pi/issues/4955),
+  [#6365](https://github.com/earendil-works/pi/issues/6365),
+  [#9560](https://github.com/earendil-works/pi/issues/9560) (serverTools proposal;
+  auto-closed PR #9556 — author runs it as an extension instead),
+  [#8661](https://github.com/earendil-works/pi/issues/8661) (`web_search` function
+  name is reserved on the Responses API),
+  [#9784](https://github.com/earendil-works/pi/issues/9784) (meta-issue:
+  vendor-specific response fields). **Do not re-file.**
+
+### Options
+- pi-pkg extension: wrap the transport and append raw tool entries via
+  `before_provider_request` — the same approach #9560's author runs. Only worth
+  it where the provider actually executes the tool (see evidence above).
+- Config-only partial: `samplingParams: {"enable_search": true}` on an
+  `openai-completions` model enables Qwen web search with no code, but the
+  compatible-mode endpoint returns no sources.
+- Otherwise use pi's own tooling (kagi skill, MCP search): visible tool calls,
+  approvals, citations, provider-agnostic.
+
+---
+
 ## Done / already handled
 
 - **Remote env (dotfiles)** — `~/.dotfiles` commit `e97a388`:
