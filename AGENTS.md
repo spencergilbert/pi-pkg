@@ -22,3 +22,9 @@ Three layers, each with one job:
 - **`SKILL.md`** — agent-facing usage only. No human setup instructions.
 
 Update every layer the change touches in the same commit. New artifacts get a root README entry and, if they need setup, an item-local README.
+
+## Skill paths
+
+In `SKILL.md`, refer to bundled scripts by paths relative to the skill's own directory
+(`./search.mjs`), following Pi's skill docs. Pi advertises each skill's location and performs
+no `{baseDir}`-style substitution, so do not reintroduce that placeholder.
