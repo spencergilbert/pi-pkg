@@ -223,15 +223,33 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
 ### Options
 - pi-pkg prompt / global AGENTS.md guidance mirroring the `read` line:
   use `grep` instead of bash `grep`/`rg`, `find` instead of bash `find`/`fd`,
-  `ls` instead of bash `ls`. The dedicated tools respect `.gitignore` (avoids
-  `node_modules` blowups) and `grep` returns line numbers.
+  `ls` instead of bash `ls`. `grep`/`find` respect `.gitignore` (avoids
+  `node_modules` blowups), `grep` returns line numbers, and all three
+  head-truncate with an actionable limit notice.
 - Upstream PR to add the same one-liners to the built-in tool definitions.
 
 ### Status
 - **Experimental local stopgap shipped**: `extensions/tool-guidance.ts` adds
   the three guidelines via the mutable `systemPromptOptions.toolGuidelines` of
   `before_agent_start` (not by re-registering tools, which would clobber
-  `ssh`'s remote-routed `execute`). Being tested ahead of the upstream PR.
+  `ssh`'s remote-routed `execute`). Committed `bfa9a50`; being tested ahead of
+  the upstream PR.
+- **Verify later with the `session-review` skill.** Baseline over the 30d to
+  2026-09-25: grep 48 vs bash-leading 177, ls 28 vs 164, find 4 vs 30. Re-run
+  after a couple of weeks and look for the dedicated counts rising while the
+  bash-leading counts fall and grep/find/ls error rates stay flat.
+
+  ```bash
+  # dedicated-tool calls
+  skills/session-review/session-report.mjs --since 30d --tool grep,find,ls \
+    | jq -r .tool | sort | uniq -c
+
+  # bash calls by leading verb (strips any leading `cd … &&` chain)
+  skills/session-review/session-report.mjs --since 30d --args --tool bash \
+    | jq -r '.args.command // ""' \
+    | sed -E 's/^[[:space:]]*(cd[^&;]*[&;]+[[:space:]]*)*//' \
+    | awk '{print $1}' | sed 's#.*/##' | sort | uniq -c | sort -rn | head -20
+  ```
 
 ---
 
