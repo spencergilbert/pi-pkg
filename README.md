@@ -148,6 +148,18 @@ skills/kagi/extract.mjs https://example.com/article
 
 See [skills/kagi/SKILL.md](skills/kagi/SKILL.md) for full usage.
 
+### session-review
+
+Reviews past Pi session logs and turns them into evidence-backed improvements. `session-report.mjs` reads Pi's v3 session JSONL and prints one loose JSON object per tool call (`ts`, `session`, `project`, `tool`, `ok`, `bytes`, `msg`, plus opt-in `args`/`details`/`err`), then you slice it with `jq` — counts, error rates, large outputs, fan-out, repeated calls. It does no aggregation and no domain-specific analysis, and it fails loudly with `file:line` on invalid JSON, a non-v3 header, malformed entries, or a result for an unknown call. Explicit invocation only: run the script directly, or ask an agent via `/skill:session-review`.
+
+```bash
+skills/session-review/session-report.mjs --since 30d
+skills/session-review/session-report.mjs --since 30d --tool mcp,fetch | jq -r .tool | sort | uniq -c
+skills/session-review/session-report.mjs --since 7d --errors-only --args
+```
+
+See [skills/session-review/SKILL.md](skills/session-review/SKILL.md) for fields, `jq` recipes, and how to interpret the results.
+
 ## Prompts
 
 ### plan
