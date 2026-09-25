@@ -1,11 +1,11 @@
 ---
 name: kagi
-description: Web search and content extraction via the Kagi Universal Search API. Use for searching documentation, facts, or any web content, and for extracting readable markdown from URLs. Requires the KAGI_API_KEY environment variable. Pure Node.js, no browser or npm dependencies.
+description: Web search and content extraction via the Kagi Universal Search API. Use for searching documentation, facts, or any web content, and for extracting readable markdown from URLs. Requires a Kagi API key in the OS keyring. Pure Node.js, no browser or npm dependencies.
 ---
 
 # Kagi
 
-Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`). Requires `KAGI_API_KEY` to be set in the environment — if it's missing, the scripts print the steps to create and export one.
+Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`). The API key is read from the OS keyring at call time; if it is missing, the scripts fail with the coordinates to store and point at `README.md` in this directory.
 
 ## Search
 

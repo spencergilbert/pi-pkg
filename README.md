@@ -139,14 +139,14 @@ Manual `/pair <focus>` invocation works as before.
 
 ### kagi
 
-Web search and page-content extraction via the [Kagi API](https://kagi.com/api/docs) (v1). Pure Node.js, no browser or npm dependencies. Requires the `KAGI_API_KEY` environment variable (create a key at https://kagi.com/settings?p=api).
+Web search and page-content extraction via the [Kagi API](https://kagi.com/api/docs) (v1). Pure Node.js, no browser or npm dependencies. The API key is read from the OS keyring at call time — GNOME Keyring via `secret-tool`, or the macOS Keychain.
 
 ```bash
 skills/kagi/search.mjs "query" -n 5 --time week
 skills/kagi/extract.mjs https://example.com/article
 ```
 
-See [skills/kagi/SKILL.md](skills/kagi/SKILL.md) for full usage.
+See [skills/kagi/SKILL.md](skills/kagi/SKILL.md) for full usage, and [skills/kagi/README.md](skills/kagi/README.md) for keyring setup and troubleshooting (including over SSH).
 
 ### session-review
 

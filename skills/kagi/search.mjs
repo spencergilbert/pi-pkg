@@ -9,9 +9,6 @@
  *   -n <num>         Limit results (1-1024, default: 10)
  *   --time <period>  Time filter: day | week | month
  *   -h, --help       Show this help
- *
- * Environment:
- *   KAGI_API_KEY  Kagi API key (required)
  */
 
 import { fail, kagiFetch } from "./lib.mjs";
@@ -22,10 +19,7 @@ function usage() {
 Options:
   -n <num>         Limit results (1-1024, default: 10)
   --time <period>  Time filter: day | week | month
-  -h, --help       Show this help
-
-Environment:
-  KAGI_API_KEY  Kagi API key (required)`);
+  -h, --help       Show this help`);
 }
 
 const args = process.argv.slice(2);

@@ -1,10 +1,14 @@
 /**
  * Shared helpers for Kagi API scripts.
  *
+ * The API key is read from the OS keyring (service "kagi", account "api_key") —
+ * see README.md in this directory for setup.
+ *
  * Environment:
- *   KAGI_API_KEY  Kagi API key (required), from https://kagi.com/settings?p=api
  *   KAGI_API_URL  Override the API base URL (for testing)
  */
+
+import { keyringGet } from "./keyring.mjs";
 
 const API_BASE = process.env.KAGI_API_URL ?? "https://kagi.com/api/v1";
 
@@ -14,17 +18,14 @@ export function fail(msg, code = 1) {
 }
 
 /**
- * Read the Kagi API key from the environment.
+ * Resolve the Kagi API key from the OS keyring.
  */
 export function resolveApiKey() {
-	const key = process.env.KAGI_API_KEY;
-	if (!key) {
-		fail(
-			"Error: KAGI_API_KEY environment variable is required.\n" +
-			"Create a key at https://kagi.com/settings?p=api, then: \"export KAGI_API_KEY=...\"",
-		);
+	try {
+		return keyringGet();
+	} catch (err) {
+		fail(`Error: ${err.message}`);
 	}
-	return key;
 }
 
 /**

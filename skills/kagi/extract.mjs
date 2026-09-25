@@ -11,9 +11,6 @@
  *   --out <file>  Write extracted markdown to a file
  *   --force       Overwrite the output file if it already exists
  *   -h, --help    Show this help
- *
- * Environment:
- *   KAGI_API_KEY  Kagi API key (required)
  */
 
 import { existsSync, writeFileSync } from "node:fs";
@@ -27,10 +24,7 @@ function usage() {
 Options:
   --out <file>  Write extracted markdown to a file
   --force       Overwrite the output file if it already exists
-  -h, --help    Show this help
-
-Environment:
-  KAGI_API_KEY  Kagi API key (required)`);
+  -h, --help    Show this help`);
 }
 
 const args = process.argv.slice(2);
