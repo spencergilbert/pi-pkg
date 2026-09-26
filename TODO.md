@@ -86,7 +86,7 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
 
 ### Options
 - **A. Build a pi-pkg `edit` wrapper** (re-register via
-  `createEditToolDefinition`, as `extensions/ssh` already does for all tools):
+  `createEditToolDefinition`):
   on not-found, append nearest-match context with line numbers; extend fuzzy
   matching to leading whitespace. Medium effort, stays in our repo.
 - **B. Adopt a known-good replacement:**
@@ -253,7 +253,7 @@ Measured 2026-09-25 over the 30d window with the recipe under Status:
   before the prompt is built (`agent-session.js:1318`). So both the `<tools>`
   snippet line and the Guidelines list are patchable — still not the tool
   *schema description* (`bash.js:153`), which would need a re-register and
-  would clobber `ssh`'s `execute`.
+  would clobber another extension's `execute`.
 - **Stopgap widened 2026-09-26** to patch both surfaces (the guidelines-only
   version shipped in `bfa9a50`): `toolSnippets.bash`
   lure removed, one positive routing rule added on `bash`/`powershell`
@@ -382,3 +382,13 @@ reach any of them: `registerTool` has no provider-native option
 - `...` tool (2 calls, "Tool ... not found") and `mcp`/`mcpScript` (2 calls
   total): insufficient signal.
 - `write`: 310 calls, 0 errors.
+- **`extensions/ssh` removed 2026-09-26.** A 90-day scan of the session logs
+  found no runtime activation record at all: every `SSH mode on` and
+  `PI_SSH_ACTIVE` hit was source code being edited (pikit, then pi-pkg), never
+  this extension running. Its derived-target premise also no longer holds —
+  only 3 of 5 local repos exist at the same path on `desktop`, so `--ssh` from
+  here fails its own probe and silently falls back to local. The remote
+  `grep`/`find` parity work was verified good against pi's built-in tools on
+  `amferd`, but nothing depends on it. If remote execution comes back, decide
+  the trigger first (builds on the GPU box?) and start from upstream's
+  `examples/extensions/ssh.ts` or running pi on the host over tmux.

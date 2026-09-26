@@ -22,10 +22,10 @@
  * Implementation note: this patches prompt metadata through the mutable
  * `systemPromptOptions` of `before_agent_start` instead of re-registering the
  * tools. Re-registering a tool with a built-in name replaces its definition
- * wholesale, which would clobber another extension's `execute` (e.g. ssh's
- * remote-routed grep/find/ls). Mutating prompt metadata composes with those
- * extensions. `normalizeBuildSystemPromptOptions` rebuilds both maps per
- * `before_agent_start`, so neither can accumulate across turns.
+ * wholesale, which would clobber another extension's `execute` (e.g. an
+ * extension routing grep/find/ls to a remote host). Mutating prompt metadata
+ * composes with those extensions. `normalizeBuildSystemPromptOptions` rebuilds
+ * both maps per `before_agent_start`, so neither can accumulate across turns.
  *
  * Guidelines and snippets are keyed by tool name and only rendered when the
  * tool is in the active selectedTools, so contributing all five lines

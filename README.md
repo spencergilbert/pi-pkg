@@ -4,34 +4,6 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 
 ## Extensions
 
-### ssh
-
-Routes pi's standard tools (`read`/`write`/`edit`/`bash`/`ls`/`find`/`grep`) to a remote host via SSH. While active, the agent's working directory is rewritten to the remote, so the model simply works "on" the remote — no separate tool namespace.
-
-The target is derived, not configured: with `--ssh`, tools run on `desktop` at the *same* cwd (local and remote machines mirror the same path structure, e.g. `~/src/<forge>/<user>/<project>`). No target state is stored — SSH mode is re-established on every session start, including after `/handoff`, `/resume`, and `/reload`. Each activation probes the remote first (reachability + mirrored cwd existence); if the probe fails, SSH mode stays off with a clear error and tools fall back to local. Just start pi without `--ssh` to work locally.
-
-**Requirements:**
-- `ssh` in `$PATH`
-- Key-based auth (no password prompts)
-- `bash` on the remote host
-- GNU `find` (for `ls`); `rg` or `grep` for search
-
-**Usage:**
-```text
-pi -e extensions/ssh/index.ts --ssh   # Route tools to desktop:$CWD
-```
-
-The local SSH agent is forwarded (`ssh -A`), so e.g. git commit signing with ssh keys works on the remote using the local 1Password agent. User `!` commands also route through the active remote.
-
-**Performance tip:** Enable SSH connection multiplexing to avoid the latency of a new TCP/TLS handshake on every tool call:
-
-```
-Host *
-  ControlMaster auto
-  ControlPath ~/.ssh/control-%r@%h:%p
-  ControlPersist 10m
-```
-
 ### mcp
 
 A thin, proxy-only [MCP](https://modelcontextprotocol.io) client. It exposes exactly one model tool, `mcp`, which proxies every configured server — no per-server tools are registered and no namespace proxies are generated.
@@ -126,7 +98,7 @@ The built-in `bash` snippet in the prompt's tool list reads "Execute bash comman
 
 It also adds the missing preference lines for `grep`, `find`, and `ls`, the same way `read` already says "Use read to examine files instead of cat or sed". Those three built-ins ship with no guidelines, so nothing steers the model away from bash `grep`/`rg`, `find`/`fd`, and `ls` — the dedicated tools respect `.gitignore` and `grep` returns line numbers.
 
-Always on; no usage or flags. It patches prompt metadata via `before_agent_start` rather than re-registering the tools, so it composes with execution-overriding extensions such as `ssh`. The snippet swap is guarded on pi's exact built-in text: if upstream rewords it, the extension reports the mismatch as an extension error once per session instead of going silently out of date.
+Always on; no usage or flags. It patches prompt metadata via `before_agent_start` rather than re-registering the tools, so it composes with extensions that override a built-in tool's `execute`. The snippet swap is guarded on pi's exact built-in text: if upstream rewords it, the extension reports the mismatch as an extension error once per session instead of going silently out of date.
 
 Still experimental — a local stopgap while the equivalent one-line changes are proposed upstream.
 

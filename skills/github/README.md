@@ -36,7 +36,7 @@ op read 'op://Private/Pi/github-pat' | gh auth login --with-token
 export GH_TOKEN="$(op read 'op://Private/Pi/github-pat')"
 ```
 
-Install and authenticate `gh` **on the remote** when using this package's `ssh` extension — routed shell commands run there, and they will not see a local login.
+Install and authenticate `gh` **on the remote** whenever your commands run there — pi launched over SSH, in a container, or on a runner. They will not see a local login.
 
 ## Troubleshooting
 
