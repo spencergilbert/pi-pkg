@@ -4,59 +4,6 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 
 ## Extensions
 
-### mcp
-
-A thin, proxy-only [MCP](https://modelcontextprotocol.io) client. It exposes exactly one model tool, `mcp`, which proxies every configured server — no per-server tools are registered and no namespace proxies are generated.
-
-The tool's `action` selects what happens:
-
-| action | behavior |
-|---|---|
-| `status` (default) | list configured servers, connection state, cache state, and the effective config hash |
-| `search` | rank cached tools by name (exact > prefix > tokens) then description; **never connects** |
-| `describe` | return a cached tool's input/output schema and its server instructions; **never connects** |
-| `connect` | lazily connect one server and refresh its cached tool metadata |
-| `call` | connect if needed, invoke a tool, and return its result |
-| `auth-start` | begin OAuth for an HTTP server (the only action that can open a browser) |
-| `auth-complete` | finish OAuth from a pasted redirect URL/code, or confirm a completed loopback callback |
-
-Tool metadata is cached under `<PI_CODING_AGENT_DIR>/mcp-cache.json`, keyed by server and invalidated by a per-server config hash, so `search`/`describe` keep working offline. Connections use the MCP SDK's stdio or Streamable HTTP transport, start lazily on first use, and close after an idle timeout (default 10 minutes) or at session shutdown. Nothing is spawned or dialed at startup.
-
-Oversized tool output is bounded to Pi's standard 50 KiB / 2000-line limit; when truncated, the full text is spilled to a temp file and its path is returned for `read`/`grep`.
-
-**Configuration** — `mcpServers` (and a shallow-merged `settings` object) are merged from, in increasing precedence:
-
-```text
-~/.config/mcp/mcp.json
-<PI_CODING_AGENT_DIR>/mcp.json
-<project>/.mcp.json
-<project>/.pi/mcp.json
-```
-
-String values support `${VAR}` (and `${VAR:-default}`) environment interpolation. A server entry is either stdio (`command`, `args`, `env`, `cwd`) or HTTP (`url`, `headers`). When a higher-precedence source repoints an existing server at a different URL, inherited auth material is dropped so credentials are never replayed against the new endpoint.
-
-```json
-{
-  "mcpServers": {
-    "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"] },
-    "linear": { "url": "https://mcp.linear.app/mcp" }
-  }
-}
-```
-
-**OAuth** — HTTP servers authenticate via OAuth 2.1 with dynamic client registration. `auth-start` runs discovery and, for a loopback redirect, spins up a `127.0.0.1` callback server that stores tokens automatically; an HTTPS redirect URI instead requires pasting the final callback URL into `auth-complete`. Tokens are stored in `<PI_CODING_AGENT_DIR>/mcp-auth.json` (mode `0600`, atomic temp-file + fsync + rename, per-entry lock, bound to the server URL). A later `401` refreshes silently through the transport and never opens a browser. Set `settings.keyring: true` (or `PI_MCP_KEYRING=1`) to use an OS keyring CLI (`secret-tool`, `security`) instead of the file.
-
-**Usage:**
-```text
-mcp({})                                                 # status
-mcp({ action: "search", query: "create issue" })
-mcp({ action: "describe", tool: "linear:create_issue" })
-mcp({ action: "connect", server: "linear" })
-mcp({ action: "call", server: "linear", tool: "create_issue", args: { title: "…" } })
-mcp({ action: "auth-start", server: "linear" })
-mcp({ action: "auth-complete", server: "linear", redirectUrl: "http://127.0.0.1:…/callback?code=…" })
-```
-
 ### notify
 
 Sends a native terminal notification (OSC 777) when Pi finishes and is waiting for input. Works in Ghostty, iTerm2, WezTerm, and rxvt-unicode.
@@ -131,7 +78,7 @@ Pi never prunes sessions, so the analyzer assumes a growing corpus: `--since` sk
 
 ```bash
 skills/session-review/session-report.mjs --since 30d
-skills/session-review/session-report.mjs --since 30d --tool mcp,fetch | jq -r .tool | sort | uniq -c
+skills/session-review/session-report.mjs --since 30d --tool bash,read | jq -r .tool | sort | uniq -c
 skills/session-review/session-report.mjs --since 7d --errors-only --args
 skills/session-review/session-report.mjs --usage --stats          # one row per billed turn
 skills/session-review/session-report.mjs --since 30d --usage \
@@ -167,10 +114,6 @@ Select it via `/settings` or:
   "theme": "catppuccin-frappe"
 }
 ```
-
-## Follow-ups
-
-- **Orchestration spike.** The original adapter also offered trusted MCP-only JavaScript orchestration (`mcpScript`) so one tool call could loop, filter, and chain several MCP calls. It was intentionally left out of this thin client. Revisit as a separate, opt-in extension once the proxy surface has settled.
 
 ## Credits
 

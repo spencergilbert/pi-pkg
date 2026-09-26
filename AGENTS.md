@@ -4,7 +4,7 @@
 
 Use `[type/name] Message` format for commits:
 
-- `[extensions/mcp] Add idle timeout to proxy calls`
+- `[extensions/goal] Add a token budget to goal continuation`
 - `[skills/shell] Add shell skill`
 - `[prompts/commit] Add commit message prompt`
 - `[themes/catppuccin] Tweak accent color`

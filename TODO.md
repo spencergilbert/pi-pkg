@@ -359,7 +359,7 @@ reach any of them: `registerTool` has no provider-native option
 - Config-only partial: `samplingParams: {"enable_search": true}` on an
   `openai-completions` model enables Qwen web search with no code, but the
   compatible-mode endpoint returns no sources.
-- Otherwise use pi's own tooling (kagi skill, MCP search): visible tool calls,
+- Otherwise use pi's own tooling (kagi skill): visible tool calls,
   approvals, citations, provider-agnostic.
 
 ---
@@ -379,8 +379,13 @@ reach any of them: `registerTool` has no provider-native option
 
 ## Ruled out (no action)
 
-- `...` tool (2 calls, "Tool ... not found") and `mcp`/`mcpScript` (2 calls
-  total): insufficient signal.
+- `...` tool (2 calls, "Tool ... not found"): insufficient signal.
+- **`extensions/mcp` removed 2026-09-25.** The session-log scan that flagged it
+  found 2 `mcp`/`mcpScript` calls total — insufficient signal to carry a proxy
+  client, its OAuth token store, and the package's only runtime dependency
+  (`@modelcontextprotocol/client`), all of which are gone with it. Revisit only
+  against a concrete server need; the orchestration spike (`mcpScript`) was
+  never built.
 - `write`: 310 calls, 0 errors.
 - **`extensions/ssh` removed 2026-09-26.** A 90-day scan of the session logs
   found no runtime activation record at all: every `SSH mode on` and
