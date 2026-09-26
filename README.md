@@ -17,7 +17,6 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 
 - [github](./skills/github/README.md) - use the `gh` CLI when interacting with GitHub.
 - [kagi](./skills/kagi/README.md) - web search and extraction via the Kagi API.
-- [session-review](./skills/session-review/README.md) - review past Pi sessions for evidence-backed improvements.
 
 ## Themes
 

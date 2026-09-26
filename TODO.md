@@ -7,11 +7,11 @@ upstream status so any of these can be picked up cold.
 
 30-day session review (2026-08-26 → 2026-09-25): **12,895 tool calls / 74
 sessions / 7 projects**, 651 errors (5.0%). Analyzer + recipes live in
-[`skills/session-review/`](skills/session-review/).
+[`.pi/skills/session-review/`](.pi/skills/session-review/).
 
 ```bash
-skills/session-review/session-report.mjs --since 30d > /tmp/sr2.jsonl
-skills/session-review/session-report.mjs --since 30d --args > /tmp/sr2-args.jsonl
+.pi/skills/session-review/session-report.mjs --since 30d > /tmp/sr2.jsonl
+.pi/skills/session-review/session-report.mjs --since 30d --args > /tmp/sr2-args.jsonl
 
 jq -s 'group_by(.tool) | map({tool: .[0].tool, n: length,
   err: (map(select(.ok==false))|length)}) | sort_by(-.n)' /tmp/sr2.jsonl
@@ -296,11 +296,11 @@ Measured 2026-09-25 over the 30d window with the recipe under Status:
 
   ```bash
   # dedicated-tool calls
-  skills/session-review/session-report.mjs --since 30d --tool grep,find,ls \
+  .pi/skills/session-review/session-report.mjs --since 30d --tool grep,find,ls \
     | jq -r .tool | sort | uniq -c
 
   # bash calls by leading verb (strips any leading `cd … &&` chain)
-  skills/session-review/session-report.mjs --since 30d --args --tool bash \
+  .pi/skills/session-review/session-report.mjs --since 30d --args --tool bash \
     | jq -r '.args.command // ""' \
     | sed -E 's/^[[:space:]]*(cd[^&;]*[&;]+[[:space:]]*)*//' \
     | awk '{print $1}' | sed 's#.*/##' | sort | uniq -c | sort -rn | head -20

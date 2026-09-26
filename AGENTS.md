@@ -25,6 +25,14 @@ Where those docs live:
 
 Every layer a change touches updates in the same commit.
 
+## Project-local artifacts
+
+`.pi/` holds artifacts that are deliberately **not** part of the package — unvetted
+work in progress, loaded by Pi from this project only (`.pi/skills/`,
+`.pi/extensions/`, `.pi/prompts/`, `.pi/themes/`). They get no `package.json` entry,
+no root README entry, and no item README requirement until they are promoted into
+`extensions/`, `skills/`, `prompts/`, or `themes/`.
+
 ## Credits
 
 Every derived or adapted artifact carries one credit sentence, in one fixed format, plus a matching `NOTICE` entry. The sentence is always:
