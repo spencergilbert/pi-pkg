@@ -4,10 +4,9 @@
  * Sends a native terminal notification via OSC 777 when Pi is done and
  * waiting for input. Works in Ghostty, iTerm2, WezTerm, and rxvt-unicode.
  *
- * Derived from mitsuhiko's notify extension
- * (https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/notify.ts),
- * as also mirrored in pi's examples (examples/extensions/notify.ts) —
- * simplified to OSC 777 only.
+ * Derived from [mitsuhiko/agent-stuff
+ * `extensions/notify.ts`](https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/notify.ts)
+ * (Apache-2.0) — simplified to OSC 777 only; also mirrored in pi's examples.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

@@ -11,7 +11,7 @@ Lookup coordinates are identical on both platforms:
 
 ## Store the key
 
-The key comes from https://kagi.com/settings?p=api — here shown being read back out of 1Password.
+The key comes from [Kagi API Keys](https://kagi.com/api/keys) — here shown being read back out of 1Password.
 
 ### Linux — libsecret (GNOME Keyring, KWallet)
 
@@ -83,3 +83,7 @@ security delete-generic-password -s kagi -a api_key # macOS
 ## How it works
 
 `keyring.mjs` owns the platform dispatch and is read-only; `lib.mjs` calls it from `resolveApiKey()`. Setup is deliberately not something the scripts do for you.
+
+## Credits
+
+Inspired by [badlogic/pi-skills `brave-search/search.js`](https://github.com/badlogic/pi-skills/blob/main/brave-search/search.js) (MIT, Copyright (c) 2024 Mario Zechner) — same single-file CLI shape, rewritten against the Kagi Universal Search API (v1) with OS-keyring key lookup instead of an environment variable.

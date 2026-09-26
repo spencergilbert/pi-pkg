@@ -19,8 +19,10 @@
  * The agent can also manage the goal itself via the get_goal, create_goal,
  * and update_goal tools (e.g. marking the goal complete once verified).
  *
- * Derived from mitsuhiko's goal extension
- * (https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/goal.ts).
+ * Derived from [mitsuhiko/agent-stuff
+ * `extensions/goal.ts`](https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/goal.ts)
+ * (Apache-2.0) — session-log-backed state instead of an external database, an
+ * optional token budget, and a stricter completion and blocked audit.
  */
 
 import { randomUUID } from "node:crypto";

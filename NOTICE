@@ -6,28 +6,33 @@ This product includes software derived from the following third-party
 projects, each retaining its original license:
 
 extensions/notify.ts
-  Derived from mitsuhiko's agent-stuff (Apache-2.0):
+  Derived from mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/notify.ts
   Modified: simplified to OSC 777 notifications only.
 
 extensions/goal.ts
-  Derived from mitsuhiko's agent-stuff (Apache-2.0):
+  Derived from mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/goal.ts
+  Modified: session-log-backed state instead of an external database; optional
+  token budget; stricter completion and blocked audits.
 
 extensions/handoff.ts
-  Taken from pi's extension examples (MIT, Copyright (c) earendil-works):
-  https://pi.dev/docs/extensions
+  Copied from earendil-works/pi (MIT, Copyright (c) earendil-works):
+  https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/handoff.ts
 
 themes/catppuccin-frappe.json
-  Taken from pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
+  Derived from madeleineostoja/pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
   https://github.com/madeleineostoja/pi-catppuccin/blob/main/themes/catppuccin-frappe.json
+  Modified: mauve accent, quiet surface/overlay chrome, thinking gradient.
 
 skills/github/SKILL.md
-  Derived from mitsuhiko's agent-stuff (Apache-2.0):
+  Derived from mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md
   Modified: states the auth rationale, the repo-targeting, output-projection,
   CI-log, gh api, and write-confirmation habits; defers details to gh --help.
 
 skills/kagi/{search,extract}.mjs
-  CLI structure inspired by badlogic's pi-skills brave-search (MIT, Copyright (c) 2024 Mario Zechner):
+  Inspired by badlogic/pi-skills (MIT, Copyright (c) 2024 Mario Zechner):
   https://github.com/badlogic/pi-skills/blob/main/brave-search/search.js
+  Modified: rewritten against the Kagi Universal Search API (v1); key read from
+  the OS keyring instead of an environment variable.

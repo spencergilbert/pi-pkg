@@ -45,3 +45,7 @@ Install and authenticate `gh` **on the remote** whenever your commands run there
 - **`404` from a repository you can open in a browser** — the token is missing the `repo` scope: `gh auth refresh -s repo`.
 - **`API rate limit exceeded`** — check the budget with `gh api rate_limit`; something in the path is talking to `api.github.com` without credentials.
 - **`error: some commands require git`** — install `git`; `gh` shells out for clone, push, and branch operations.
+
+## Credits
+
+Derived from [mitsuhiko/agent-stuff `skills/github/SKILL.md`](https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md) (Apache-2.0) — states the auth rationale and the repo-targeting, output-projection, CI-log, `gh api`, and write-confirmation habits; defers details to `gh --help`.

@@ -11,7 +11,9 @@
  *
  * The generated prompt appears as a draft in the editor for review/editing.
  *
- * Taken from pi's handoff example (examples/extensions/handoff.ts).
+ * Copied from [earendil-works/pi
+ * `packages/coding-agent/examples/extensions/handoff.ts`](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/handoff.ts)
+ * (MIT, Copyright (c) earendil-works).
  */
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
