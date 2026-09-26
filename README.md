@@ -138,8 +138,6 @@ Routes GitHub work — issues, PRs, CI runs, releases, search, API queries — t
 
 See [skills/github/SKILL.md](skills/github/SKILL.md) and [skills/github/README.md](skills/github/README.md) for `gh` install/auth setup, including headless and remote hosts.
 
-Derived from [mitsuhiko's agent-stuff GitHub skill](https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md), narrowed to guidance over an example catalogue.
-
 Derived from [mitsuhiko's agent-stuff `skills/github`](https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md), expanded with the issue/PR/CI/search/release/API recipes above.
 
 ### kagi
