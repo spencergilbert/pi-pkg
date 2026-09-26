@@ -178,16 +178,6 @@ A lightweight discussion/planning mode for when you want to explore a problem sp
 /plan                     ask what to explore
 ```
 
-### pair
-
-Pair-programming partner and teacher persona: checks what you've changed, explains what the code is doing and why it matters, and offers 1-2 concrete suggestions tied to existing patterns — teaching first, never implementing unless asked. Pass a focus to prioritize a file or area.
-
-```text
-/pair <focus>   start a pair review of the given file or area
-```
-
-Automate it with the `pair` extension (`/pairwatch`) below.
-
 Other prompts live in `prompts/` — see [Pi prompts docs](https://pi.dev/docs/prompts).
 
 ## Themes
