@@ -120,11 +120,15 @@ Derived from [mitsuhiko's goal extension](https://github.com/mitsuhiko/agent-stu
 
 ### tool-guidance (experimental)
 
-Adds "prefer the dedicated tool over bash" guidelines for the `grep`, `find`, and `ls` tools, the same way `read` already says "Use read to examine files instead of cat or sed". Those three built-ins ship with no guidelines, so nothing steers the model away from bash `grep`/`rg`, `find`/`fd`, and `ls` — the dedicated tools respect `.gitignore` and `grep` returns line numbers.
+Steers file work to the dedicated tools at both places the model reads before it picks a tool.
 
-Always on; no usage or flags. It patches the system prompt's Guidelines section via `before_agent_start` rather than re-registering the tools, so it composes with execution-overriding extensions such as `ssh`.
+The built-in `bash` snippet in the prompt's tool list reads "Execute bash commands (ls, grep, find, etc.)" — it advertises precisely the three operations that `ls`, `find`, and `grep` do better, and a description at selection time beats a rule 100 lines earlier. It is replaced with the shell's actual lane (`git, npm, builds, etc.`). A routing guideline on `bash` and `powershell` then states the same thing positively — shell for git, builds, installs, pipelines; file work as its own tool call — which also covers mutating files via `edit`/`write` rather than `sed -i` or `cat >`.
 
-Still experimental — a local stopgap while the equivalent one-line additions are proposed upstream for the built-in tool definitions.
+It also adds the missing preference lines for `grep`, `find`, and `ls`, the same way `read` already says "Use read to examine files instead of cat or sed". Those three built-ins ship with no guidelines, so nothing steers the model away from bash `grep`/`rg`, `find`/`fd`, and `ls` — the dedicated tools respect `.gitignore` and `grep` returns line numbers.
+
+Always on; no usage or flags. It patches prompt metadata via `before_agent_start` rather than re-registering the tools, so it composes with execution-overriding extensions such as `ssh`. The snippet swap is guarded on pi's exact built-in text: if upstream rewords it, the extension reports the mismatch as an extension error once per session instead of going silently out of date.
+
+Still experimental — a local stopgap while the equivalent one-line changes are proposed upstream.
 
 ## Skills
 

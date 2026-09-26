@@ -202,7 +202,7 @@ Maintainers reopen worthwhile ones daily. Verified against `main` where noted.
 
 ---
 
-## 5. grep / find / ls — underused; no prompt guidance
+## 5. grep / find / ls — underused; the prompt steers to bash
 
 **Priority: high leverage for the effort. Genuinely unclaimed upstream.**
 
@@ -215,6 +215,13 @@ Measured 2026-09-25 over the 30d window with the recipe under Status:
   call.
 - `dist/core/tools/{grep,find,ls}.js` have `guidelines: []`; only `read`
   ("Use read instead of cat or sed") and `write` carry any.
+- **The prompt invites the behaviour it never corrects.** `bash.js:31` renders
+  as `- bash: Execute bash commands (ls, grep, find, etc.)` in the `<tools>`
+  list — the three dedicated tools named as shell examples. `buildRules`
+  (`system-prompt.js:30-56`, steer added at :53) hardcodes a route to bash when
+  grep/find/ls are *not* selected and adds nothing when they are:
+  one-directional by design. `powershell`'s snippet carries no such lure
+  (`Execute PowerShell commands`).
 - **Correction:** the first pass recorded 177/164/30 for the bash-leading
   counts. Re-running the same recipe on the same window gives 1,665/375/55, so
   the underuse is ~4-9× worse than first recorded.
@@ -227,6 +234,10 @@ Measured 2026-09-25 over the 30d window with the recipe under Status:
   overriding sections, not tool steering. **Genuine gap.**
 
 ### Options
+- Upstream: reword `bash`'s snippet to drop `ls, grep, find` (the highest-
+  leverage single change — it removes a live contradiction at the surface the
+  model reads when choosing a tool), and add the symmetric `buildRules` branch
+  for when those tools *are* selected.
 - pi-pkg prompt / global AGENTS.md guidance mirroring the `read` line:
   use `grep` instead of bash `grep`/`rg`, `find` instead of bash `find`/`fd`,
   `ls` instead of bash `ls`. `grep`/`find` respect `.gitignore` (avoids
@@ -235,11 +246,41 @@ Measured 2026-09-25 over the 30d window with the recipe under Status:
 - Upstream PR to add the same one-liners to the built-in tool definitions.
 
 ### Status
-- **Experimental local stopgap shipped**: `extensions/tool-guidance.ts` adds
-  the three guidelines via the mutable `systemPromptOptions.toolGuidelines` of
-  `before_agent_start` (not by re-registering tools, which would clobber
-  `ssh`'s remote-routed `execute`). Committed `bfa9a50`; being tested ahead of
-  the upstream PR.
+- **Reachable from an extension (corrects an earlier assumption).**
+  `normalizeBuildSystemPromptOptions` (`system-prompt.js:9-23`) shallow-copies
+  `toolSnippets` and array-copies `toolGuidelines`/`promptGuidelines`, and
+  `emitBeforeAgentStart` (`runner.js:1017`) hands every handler the same object
+  before the prompt is built (`agent-session.js:1318`). So both the `<tools>`
+  snippet line and the Guidelines list are patchable — still not the tool
+  *schema description* (`bash.js:153`), which would need a re-register and
+  would clobber `ssh`'s `execute`.
+- **Stopgap widened 2026-09-26** to patch both surfaces (the guidelines-only
+  version shipped in `bfa9a50`): `toolSnippets.bash`
+  lure removed, one positive routing rule added on `bash`/`powershell`
+  (covering `edit`/`write` versus `sed -i`/`cat >`), and the three original
+  guideline lines kept verbatim so they stay diffable against the upstream PR.
+  Still prompt-only — the `tool_call` guard idea was explicitly rejected.
+- **Drift fails loudly, not silently.** The snippet swap is guarded on pi's
+  exact built-in text and throws on anything unexpected; `runner.js:1047-1055`
+  catches per-handler, reports via `emitError`, and continues, so the throw
+  costs only the snippet swap (guidelines are applied first). Once per process
+  — `before_agent_start` runs every turn and repeated errors are noise; the
+  flag re-arms on `/reload`. `docs/extensions.md:201`: "Pi reports handler
+  errors and continues where possible."
+- **Rendered-prompt check (no model call)**: import `buildSystemPrompt` +
+  `normalizeBuildSystemPromptOptions` from
+  `node_modules/@earendil-works/pi-coding-agent/dist/core/system-prompt.js` by
+  absolute path (the `exports` map blocks the bare subpath), feed it pi's real
+  built-in snippets, run the handler, and grep the output. Verified: lure gone
+  from `<tools>`, each rule present exactly once, guidelines survive the drift
+  throw, and double-applying the handler stays idempotent (`buildRules` dedupes
+  on trimmed text) so two loaded copies of pi-pkg cannot false-alarm or spam.
+- **Verify later with the `session-review` skill.** Baseline over the 30d to
+  2026-09-25: grep 48 vs bash-leading `grep` 1,665, ls 31 vs 375, find 4 vs 55.
+  Re-run after a couple of weeks and look for the dedicated counts rising while
+  the bash-leading counts fall and grep/find/ls error rates stay flat.
+  **Both layers changed on 2026-09-26**, so coverage restarts; also add
+  bash-leading `cat`/`sed` as a measure of the `edit`/`write` half.
 - **No duplicate-guidelines bug** (checked 2026-09-25): an earlier pass thought
   each line rendered twice, but that was an artifact of `--mode json` emitting
   the system prompt as both `message_start` and `message_end`. Session logs show
@@ -247,10 +288,6 @@ Measured 2026-09-25 over the 30d window with the recipe under Status:
   `normalizeBuildSystemPromptOptions` rebuilds `toolGuidelines` as a fresh array
   on every `before_agent_start`, so the handler cannot accumulate. No guard
   needed, and nothing grows with session length.
-- **Verify later with the `session-review` skill.** Baseline over the 30d to
-  2026-09-25: grep 48 vs bash-leading `grep` 1,665, ls 31 vs 375, find 4 vs 55.
-  Re-run after a couple of weeks and look for the dedicated counts rising while
-  the bash-leading counts fall and grep/find/ls error rates stay flat.
 - **Coverage as of 2026-09-25 is too thin to read.** Only 5 sessions carry the
   guideline in the system prompt, and in 4 of them it arrived mid-session (model
   change/reload) rather than at the start. Those 5 are also bash-heavy
