@@ -1,6 +1,27 @@
-# kagi — setup
+# kagi
 
-The `kagi` scripts read the Kagi API key from the OS keyring at call time. Nothing is read from the environment, so there is no key sitting in the environment of every shell and every process.
+Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`).
+
+## Use
+
+Run from this directory, or prefix with the skill path:
+
+```bash
+scripts/search.mjs "query"                         # Basic search (10 results)
+scripts/search.mjs "query" -n 5                    # Fewer results
+scripts/search.mjs "query" --time week             # Results from the last week
+
+scripts/extract.mjs https://example.com/article    # Markdown to stdout
+scripts/extract.mjs https://a.com https://b.com    # Up to 10 URLs at once
+scripts/extract.mjs https://a.com --out article.md # Write to file
+scripts/extract.mjs https://a.com --out article.md --force  # Overwrite existing
+```
+
+`search.mjs` takes `-n <num>` (1–1024, default: 10), `--time day|week|month`, and `-h/--help`. `extract.mjs` takes up to 10 HTTPS URLs, `--out <file>` (refuses to overwrite unless `--force` is given), and `-h/--help`. Both request `format: "markdown"` and pass the response through to stdout.
+
+## Setup
+
+The scripts read the Kagi API key from the OS keyring at call time. Nothing is read from the environment, so there is no key sitting in the environment of every shell and every process.
 
 Lookup coordinates are identical on both platforms:
 
@@ -9,11 +30,11 @@ Lookup coordinates are identical on both platforms:
 | service | `kagi` |
 | account | `api_key` |
 
-## Store the key
+### Store the key
 
 The key comes from [Kagi API Keys](https://kagi.com/api/keys) — here shown being read back out of 1Password.
 
-### Linux — libsecret (GNOME Keyring, KWallet)
+#### Linux — libsecret (GNOME Keyring, KWallet)
 
 ```bash
 op read 'op://Private/Pi/kagi' | secret-tool store --label='Kagi API key' service kagi key api_key
@@ -27,7 +48,7 @@ secret-tool lookup service kagi key api_key | wc -c
 
 `secret-tool` ships in `libsecret-tools` (Debian/Ubuntu), `libsecret` (Fedora, Arch).
 
-### macOS — login Keychain
+#### macOS — login Keychain
 
 ```bash
 security add-generic-password -s kagi -a api_key -U -w "$(op read 'op://Private/Pi/kagi')"
@@ -44,7 +65,7 @@ Two caveats:
 - `-w <value>` puts the key in the process arguments briefly, where `ps` can see it. To avoid that, drop `-w` and let `security` prompt — but it cannot read from a pipe, so you type or paste the key twice.
 - The first read from a new caller may raise a Keychain access prompt. Approve it once with **Always Allow**; otherwise script reads hang until the 10 second timeout.
 
-## Rotate or remove
+### Rotate or remove
 
 Rotate by re-running the store command above: on Linux the identical attributes overwrite the existing entry, on macOS `-U` updates it in place. The scripts pick up the new value on the next call.
 
@@ -82,7 +103,7 @@ security delete-generic-password -s kagi -a api_key # macOS
 
 ## How it works
 
-`keyring.mjs` owns the platform dispatch and is read-only; `lib.mjs` calls it from `resolveApiKey()`. Setup is deliberately not something the scripts do for you.
+`scripts/` holds the implementation: `search.mjs` and `extract.mjs` are the two CLIs, `lib.mjs` owns the shared POST helper, and `keyring.mjs` owns the platform dispatch and is read-only. Setup is deliberately not something the scripts do for you.
 
 ## Credits
 

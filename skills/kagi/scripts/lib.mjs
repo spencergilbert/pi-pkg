@@ -1,8 +1,8 @@
 /**
  * Shared helpers for Kagi API scripts.
  *
- * The API key is read from the OS keyring (service "kagi", account "api_key") —
- * see README.md in this directory for setup.
+ * The API key is read from the OS keyring (service "kagi", account "api_key").
+ * It must already be stored by the user.
  *
  * Environment:
  *   KAGI_API_URL  Override the API base URL (for testing)

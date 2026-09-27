@@ -1,8 +1,8 @@
 /**
  * OS keyring access for the Kagi API key.
  *
- * Read-only. Storing the key is the user's responsibility — see README.md in
- * this directory for the per-platform setup commands.
+ * Read-only. The key must already be stored by the user; never attempt to
+ * store it from here.
  *
  *   Linux  secret-tool lookup service kagi key api_key   (libsecret)
  *   macOS  security find-generic-password -s kagi -a api_key -w
@@ -18,8 +18,9 @@ const ACCOUNT = "api_key";
 const TIMEOUT_MS = 10_000;
 
 const SETUP_HINT =
-	`Store the key in the OS keyring as service="${SERVICE}", account="${ACCOUNT}" — ` +
-	"see README.md next to this script for the exact command on your platform.";
+	`Ask the user to store the Kagi API key in the OS keyring as service="${SERVICE}", ` +
+	`account="${ACCOUNT}" (key from https://kagi.com/api/keys), then retry. ` +
+	`Do not attempt to store it yourself.`;
 
 const BACKENDS = {
 	linux: {
@@ -80,14 +81,14 @@ function describeFailure(err, backend) {
 				: "\nThe login keyring is probably locked, and no unlock prompt is reachable from this process.";
 		return (
 			`timed out after ${TIMEOUT_MS / 1000}s reading from ${backend.command}.${promptHint}\n` +
-			"See the Troubleshooting section of README.md next to this script."
+			"Ask the user to unlock the keyring, then retry."
 		);
 	}
 
 	if (/dbus|autolaunch|display|could not connect|cannot connect/i.test(stderr)) {
 		return (
 			"could not reach the OS keyring session bus — expected over SSH, in a container, or without a desktop session.\n" +
-			"See the Troubleshooting section of README.md next to this script."
+			"Ask the user to run where the login keyring is unlocked, or to unlock it first, then retry."
 		);
 	}
 

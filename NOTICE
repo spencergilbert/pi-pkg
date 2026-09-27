@@ -27,7 +27,7 @@ skills/github/SKILL.md
   Modified: states the auth rationale, the repo-targeting, output-projection,
   CI-log, gh api, and write-confirmation habits; defers details to gh --help.
 
-skills/kagi/{search,extract}.mjs
+skills/kagi/scripts/{search,extract}.mjs
   Inspired by badlogic/pi-skills (MIT, Copyright (c) 2024 Mario Zechner):
   https://github.com/badlogic/pi-skills/blob/main/brave-search/search.js
   Modified: rewritten against the Kagi Universal Search API (v1); key read from

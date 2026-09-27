@@ -1,20 +1,19 @@
 ---
 name: kagi
-description: Web search and content extraction via the Kagi Universal Search API. Use for searching documentation, facts, or any web content, and for extracting readable markdown from URLs. Requires a Kagi API key in the OS keyring. Pure Node.js, no browser or npm dependencies.
+description: Web search and content extraction via the Kagi Universal Search API. Use for searching documentation, facts, or any web content, and for extracting readable markdown from URLs.
+compatibility: Requires Node.js 18+ and a Kagi API key in the OS keyring. Setup is documented in README.md in this directory.
 ---
 
 # Kagi
 
-Web search and page-content extraction using the Kagi API (v1). Lightweight — no browser, no npm dependencies, just Node.js 18+ (uses global `fetch`). The API key is read from the OS keyring at call time; if it is missing, the scripts fail with the coordinates to store and point at `README.md` in this directory.
-
-Paths below are relative to this skill's directory. Run them from there, or prefix them with the skill's location pi advertises in its system prompt.
+Run scripts relative to this skill directory. If a script reports a missing or unreadable key, surface the error to the user and stop — do not attempt to store or work around the key yourself.
 
 ## Search
 
 ```bash
-./search.mjs "query"                         # Basic search (10 results)
-./search.mjs "query" -n 5                   # Fewer results
-./search.mjs "query" --time week            # Results from the last week
+scripts/search.mjs "query"                      # Basic search (10 results)
+scripts/search.mjs "query" -n 5                 # Fewer results
+scripts/search.mjs "query" --time week          # Results from the last week
 ```
 
 ### Options
@@ -26,10 +25,10 @@ Paths below are relative to this skill's directory. Run them from there, or pref
 ## Extract Page Content
 
 ```bash
-./extract.mjs https://example.com/article    # Markdown to stdout
-./extract.mjs https://a.com https://b.com    # Up to 10 URLs at once
-./extract.mjs https://a.com --out article.md # Write to file
-./extract.mjs https://a.com --out article.md --force  # Overwrite existing
+scripts/extract.mjs https://example.com/article    # Markdown to stdout
+scripts/extract.mjs https://a.com https://b.com    # Up to 10 URLs at once
+scripts/extract.mjs https://a.com --out article.md # Write to file
+scripts/extract.mjs https://a.com --out article.md --force  # Overwrite existing
 ```
 
 Extracts readable content as markdown from up to 10 HTTPS URLs in a single request.
