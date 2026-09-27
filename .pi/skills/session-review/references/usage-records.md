@@ -1,13 +1,13 @@
 ---
 title: session-review — usage records
-description: Schema, recipes, and gotchas for `session-report.mjs --usage`. Read this before answering token, cost, model, abort, truncation, or compaction questions about Pi sessions.
+description: Schema, recipes, and gotchas for `scripts/session-report.mjs --usage`. Read this before answering token, cost, model, abort, truncation, or compaction questions about Pi sessions.
 ---
 
 # Usage records
 
-`./session-report.mjs --usage` emits one row per model-attributed usage event instead of one row per tool call: every assistant message, every `usage` entry (`type: "usage"`, e.g. cache warming), and every `compaction` that carries `usage`. Rows stream out as they parse, so memory stays flat.
+`scripts/session-report.mjs --usage` emits one row per model-attributed usage event instead of one row per tool call: every assistant message, every `usage` entry (`type: "usage"`, e.g. cache warming), and every `compaction` that carries `usage`. Rows stream out as they parse, so memory stays flat.
 
-`--usage` rejects `--tool`, `--errors-only`, `--args`, `--details`, `--arg-bytes`, and `--allow-dangling`: they select on tool-call fields these rows don't have. Ask for one record type at a time. Run from this skill's directory, or use the absolute script path.
+`--usage` rejects `--tool`, `--errors-only`, `--args`, `--details`, `--arg-bytes`, and `--allow-dangling`: they select on tool-call fields these rows don't have. Ask for one record type at a time. Run scripts relative to the skill directory.
 
 ## Fields
 
@@ -35,7 +35,7 @@ These rows sum to the file's full token total, because they include the `compact
 
 ```bash
 # tokens and notional cost by model, most-used first
-./session-report.mjs --usage | jq -n '
+scripts/session-report.mjs --usage | jq -n '
   reduce inputs as $u ({}; .[$u.model // "?"] = (.[$u.model // "?"] // {n:0,tok:0,cost:0})
     | .[$u.model // "?"].n += 1
     | .[$u.model // "?"].tok += ($u.total // 0)
@@ -44,7 +44,7 @@ These rows sum to the file's full token total, because they include the `compact
 
 # monthly trend: did a shipped change move cost or friction? (the question --usage exists for)
 # [0:7] buckets by month; [0:10] by day, [0:4] by quarter
-./session-report.mjs --usage | jq -n '
+scripts/session-report.mjs --usage | jq -n '
   reduce inputs as $u ({}; (($u.ts // "")[0:7]) as $m
     | .[$m] = (.[$m] // {turns:0,tok:0,cost:0,aborted:0})
     | .[$m].turns += 1 | .[$m].tok += ($u.total // 0) | .[$m].cost += ($u.cost // 0)
@@ -52,20 +52,20 @@ These rows sum to the file's full token total, because they include the `compact
   | to_entries | map(.value + {month: .key}) | sort_by(.month)'
 
 # turns that ended without acting, per model (giving-up / confusion signal)
-./session-report.mjs --usage | jq -n '
+scripts/session-report.mjs --usage | jq -n '
   reduce inputs as $u ({}; .[$u.model // "?"] = (.[$u.model // "?"] // {n:0,noCall:0})
     | .[$u.model // "?"].n += 1 | if $u.calls == 0 then .[$u.model // "?"].noCall += 1 else . end)
   | to_entries | map(.value + {model: .key}) | sort_by(-.noCall)'
 
 # truncations and aborts, with the text pi recorded
-./session-report.mjs --usage | jq -r 'select(.stop == "length" or .stop == "aborted" or .stop == "error")
+scripts/session-report.mjs --usage | jq -r 'select(.stop == "length" or .stop == "aborted" or .stop == "error")
   | [.ts, .model, .stop, (.err // "")] | @tsv'
 
 # context pressure: where compaction actually fired
-./session-report.mjs --usage | jq -r 'select(.kind == "compaction") | [.ts, .session, .tokensBefore] | @tsv'
+scripts/session-report.mjs --usage | jq -r 'select(.kind == "compaction") | [.ts, .session, .tokensBefore] | @tsv'
 
 # cost by project
-./session-report.mjs --usage | jq -n '
+scripts/session-report.mjs --usage | jq -n '
   reduce inputs as $u ({}; .[$u.project // "?"] = ((.[$u.project // "?"] // 0) + ($u.cost // 0)))
   | to_entries | map({project: .key, usd: ((.value * 100 | round) / 100)}) | sort_by(-.usd)'
 ```
@@ -75,9 +75,9 @@ To join the two record types, aggregate each side and join on `session` — e.g.
 ```bash
 # tokens per session, then error rate per session, lined up by session id
 # note: this is an inner join — sessions with no tool calls drop out
-./session-report.mjs --usage | jq -sr '
+scripts/session-report.mjs --usage | jq -sr '
   group_by(.session) | map({session: .[0].session, tok: (map(.total // 0) | add)})' > /tmp/tok.json
-./session-report.mjs | jq -sr '
+scripts/session-report.mjs | jq -sr '
   group_by(.session) | map({session: .[0].session, calls: length,
     err: (map(select(.ok == false)) | length)})' > /tmp/err.json
 jq -n --slurpfile t /tmp/tok.json --slurpfile e /tmp/err.json '
@@ -93,9 +93,11 @@ jq -n --slurpfile t /tmp/tok.json --slurpfile e /tmp/err.json '
 - **Off-branch turns are counted** — see the tree gotcha in `SKILL.md`. Aborted and retried turns still cost what they cost, which is usually what you want for money, and usually *not* what you want for "how did the agent behave".
 - **`calls: 0` on an `aborted` turn is not a refusal.** It is usually an abort before the model got anywhere; check `err` before reading it as the agent giving up.
 
-## Interpret
+## Interpret: same bar as `SKILL.md`
 
-Signals worth checking in usage records:
+Clip first (code counts only), rule one alternative out, then propose. Every proposal needs observation (count + denominator + window), two `session` examples with `ts`, what you ruled out, and a falsifier with its re-check query. Put the falsifier in the commit message when the change ships.
+
+Signals worth clipping in usage records (candidates, not conclusions):
 
 - **`stop: "length"`** → output truncated at the cap; a silent quality cliff worth sizing against the model's limit.
 - **`aborted` / `error` concentrated on one model or provider** → flaky provider, or a prompt that outruns it.

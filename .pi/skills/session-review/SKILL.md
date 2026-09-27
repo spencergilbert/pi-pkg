@@ -6,19 +6,19 @@ disable-model-invocation: true
 
 # Session review
 
-Analyze past Pi sessions and turn them into concrete, evidence-backed improvements. `session-report.mjs` (this directory) normalizes Pi's v3 session JSONL into a loose JSONL stream; it does no aggregation, so you do the interpreting and any grouping with `jq`.
+Analyze past Pi sessions and turn them into concrete, evidence-backed improvements. `scripts/session-report.mjs` normalizes Pi's v3 session JSONL into a loose JSONL stream; it does no aggregation, so you do the interpreting and any grouping with `jq`.
 
-**Choose the record type before you start.** Default rows are one per **tool call** — friction questions: errors, output sizes, fan-out, repeats. With `--usage`, rows are one per **model-attributed usage event** — money questions: tokens, cost by model or project, aborts, truncations, compaction. For anything in the second group, read [`usage-records.md`](usage-records.md) first; it has that schema, its recipes, and its own gotchas. The two streams join on `session`.
+**Choose the record type before you start.** Default rows are one per **tool call** — friction questions: errors, output sizes, fan-out, repeats. With `--usage`, rows are one per **model-attributed usage event** — money questions: tokens, cost by model or project, aborts, truncations, compaction. For anything in the second group, read [`references/usage-records.md`](references/usage-records.md) first; it has that schema, its recipes, and its own gotchas. The two streams join on `session`.
 
-Run commands from this skill's directory, or substitute its absolute path for `./`.
+Run scripts relative to this skill directory.
 
 ## Run it
 
 ```bash
-./session-report.mjs --since 30d              # one row per tool call
-./session-report.mjs --since 30d --usage      # one row per usage event
-./session-report.mjs --since 30d --args       # include tool arguments (clipped)
-./session-report.mjs --since 30d --stats      # stderr: files read/skipped, rows, ms
+scripts/session-report.mjs --since 30d              # one row per tool call
+scripts/session-report.mjs --since 30d --usage      # one row per usage event
+scripts/session-report.mjs --since 30d --args       # include tool arguments (clipped)
+scripts/session-report.mjs --since 30d --stats      # stderr: files read/skipped, rows, ms
 ```
 
 Options: `--dir <path>`, `--since <30d|12h|2w|ISO>`, `--tool <a,b>`, `--project <path>`, `--session <id|prefix>`, `--errors-only`, `--args`, `--details`, `--arg-bytes <n>`, `--allow-dangling`, `--usage`, `--stats`.
@@ -58,35 +58,35 @@ Stream with `reduce inputs` — constant memory, same answers as slurping:
 
 ```bash
 # most-used tools
-./session-report.mjs --since 30d | jq -r .tool | sort | uniq -c | sort -rn | head
+scripts/session-report.mjs --since 30d | jq -r .tool | sort | uniq -c | sort -rn | head
 
 # error rate per tool
-./session-report.mjs --since 30d | jq -n '
+scripts/session-report.mjs --since 30d | jq -n '
   reduce inputs as $r ({n:0,e:0}; .n += 1 | if $r.ok == false then .e += 1 else . end)
   | {calls: .n, errors: .e, rate: (.e / .n * 100 | round)}'
 
 # error rate per tool, worst first
-./session-report.mjs --since 30d | jq -n '
+scripts/session-report.mjs --since 30d | jq -n '
   reduce inputs as $r ({}; .[$r.tool] = (.[$r.tool] // {n:0,e:0}) | .[$r.tool].n += 1
     | if $r.ok == false then .[$r.tool].e += 1 else . end)
   | to_entries | map({tool: .key, n: .value.n, errors: .value.e}) | sort_by(-.errors)'
 
 # largest outputs (context pressure), streamed: keeps a top-20, no slurp
-./session-report.mjs --since 30d | jq -n '
+scripts/session-report.mjs --since 30d | jq -n '
   reduce inputs as $r ([]; if $r.bytes == null then . else (. + [$r] | sort_by(-.bytes) | .[0:20]) end)
   | map({bytes, tool, ts, session})'
 
 # fan-out: how many tool calls share one assistant message
-./session-report.mjs --since 30d | jq -s '
+scripts/session-report.mjs --since 30d | jq -s '
   group_by([.session, .msg]) | map(length) | group_by(.) | map({calls: .[0], n: length})'
 
 # repeated identical calls (needs --args)
-./session-report.mjs --since 30d --args | jq -s '
+scripts/session-report.mjs --since 30d --args | jq -s '
   group_by([.tool, (.args | tostring)]) | map(select(length > 1))
   | map({tool: .[0].tool, n: length, args: .[0].args}) | sort_by(-.n) | .[0:20]'
 
 # failure text
-./session-report.mjs --since 30d --errors-only | jq -r '[.tool, .err] | @tsv'
+scripts/session-report.mjs --since 30d --errors-only | jq -r '[.tool, .err] | @tsv'
 ```
 
 ## Prompt content: read the raw log
@@ -114,13 +114,25 @@ Entry types besides `message`: `session`, `model_change`, `thinking_level_change
 - **Sessions are trees, and both record modes read the raw file linearly.** `/tree` and `/fork` leave abandoned branches in the same file: 1.3% of assistant turns in a two-month corpus are off the active path (one session had 121). Counts are *records written*, not *context pi actually saw*. Say which you mean.
 - **`--since 30d` is a rolling now-minus-30d cutoff**, not a calendar date, so a hand-rolled cutoff will differ by a session or two.
 - **`--args` clips strings at 200 chars** (`--arg-bytes` to raise). First-token analysis is unaffected; long-command analysis is not.
-- Usage-record gotchas (token double-counting, cost pricing, model attribution on compaction) are in `usage-records.md`.
+- Usage-record gotchas (token double-counting, cost pricing, model attribution on compaction) are in `references/usage-records.md`.
 
-## Interpret
+## Interpret: clip, then check, then propose
 
-Read the numbers, then propose **3–5 ordered, evidence-backed** improvements. Cite counts, examples, and timestamps; prefer changes the data supports and say what you ruled out.
+Do it in this order. Code produces the counts; you only narrate what code produced.
 
-Signals worth checking in tool-call records:
+**1. Clip — top 3 clusters, nothing else.** Run the recipes above first and keep at most three clusters (an error text, a repeated call, a large-`bytes` source, a fan-out pattern). Rank by `errors × sessions affected`, not by how interesting it reads. If nothing clears ~5+ occurrences across 2+ sessions, stop and say so — that is the result.
+
+**2. Check — rule one alternative out.** Before proposing, stratify once: is it one bad session, one model/provider, one project, or off-branch turns (see Gotchas)? Re-run the same query grouped by `session`, by `project`, or against `--usage` (`aborted`/`error` by model) as needed. State what you checked and what you ruled out. If you did not check, say so.
+
+**3. Propose — at most 3–5, ordered, each with receipts.** Every proposal needs all five, no exceptions:
+
+- **Observation:** count + denominator + window (`34/210 bash calls (16%), --since 30d`).
+- **Examples:** at least two `session` ids with `ts` (timestamps are part of the evidence).
+- **Ruled out:** one alternative you checked in step 2.
+- **Falsifier:** what you expect to move and the exact re-check query (`Expected: bash ENOENT 22 → <10 per 30d. Re-check: <query>`). If it doesn't move in two weeks, revert.
+- **Smallest change:** prefer a doc line, flag, limit, or projection over a new engine or abstraction.
+
+Signals worth clipping (candidates, not conclusions):
 
 - **High error rate for a tool** → argument/naming friction; look at `err` text and repeated retries.
 - **Large `bytes`** → context pressure; consider result projection, limits, or spill-aware reads.
@@ -129,4 +141,4 @@ Signals worth checking in tool-call records:
 - **Many calls with few successes** → a workflow or prompt that isn't landing.
 - **Usage concentrated in one provider or project** → where guidance would pay off.
 
-Do not propose a new engine or abstraction when the counts are small — say so explicitly if the data doesn't justify it.
+Do not propose a new engine or abstraction when the counts are small — say so explicitly if the data doesn't justify it. Never propose from a single session, a single `err` string with no denominator, or a pattern you did not re-query. Put the falsifier and re-check query in the commit message when the change ships, so the next review can verify it.
