@@ -5,7 +5,6 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 ## Extensions
 
 - [goal.ts](./extensions/goal.ts) - long-running objective mode with automatic continuation.
-- [handoff.ts](./extensions/handoff.ts) - transfers context to a new focused session.
 - [notify.ts](./extensions/notify.ts) - sends a native terminal notification (OSC 777) when Pi finishes and is waiting for input.
 
 ## Prompts

@@ -16,10 +16,6 @@ extensions/goal.ts
   Modified: session-log-backed state instead of an external database; optional
   token budget; stricter completion and blocked audits.
 
-extensions/handoff.ts
-  Copied from earendil-works/pi (MIT, Copyright (c) earendil-works):
-  https://github.com/earendil-works/pi/blob/main/packages/coding-agent/examples/extensions/handoff.ts
-
 themes/catppuccin-frappe.json
   Derived from madeleineostoja/pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
   https://github.com/madeleineostoja/pi-catppuccin/blob/main/themes/catppuccin-frappe.json
