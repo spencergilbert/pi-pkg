@@ -32,3 +32,10 @@ skills/kagi/scripts/{search,extract}.mjs
   https://github.com/badlogic/pi-skills/blob/main/brave-search/search.js
   Modified: rewritten against the Kagi Universal Search API (v1); key read from
   the OS keyring instead of an environment variable.
+
+skills/commit/SKILL.md
+  Inspired by mitsuhiko/agent-stuff (Apache-2.0):
+  https://github.com/mitsuhiko/agent-stuff/blob/main/skills/commit/SKILL.md
+  Modified: defers to project instructions and observed history instead of a
+  prescribed Conventional Commits format; detects jj as well as git; leaves
+  signing and trailers to repository configuration.

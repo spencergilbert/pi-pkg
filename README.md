@@ -13,6 +13,7 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 
 ## Skills
 
+- [commit](./skills/commit/README.md) - commit changes with a message matching the repository's own conventions, in git or jj.
 - [github](./skills/github/README.md) - use the `gh` CLI when interacting with GitHub.
 - [kagi](./skills/kagi/README.md) - web search and extraction via the Kagi API.
 
