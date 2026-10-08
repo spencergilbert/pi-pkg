@@ -85,6 +85,19 @@ extensions/goal.ts
 
 Update the credit sentence and its `NOTICE` entry in the same commit as the artifact they describe.
 
+## Development
+
+```bash
+npm run typecheck   # tsc --noEmit over extensions/, per tsconfig.json
+```
+
+Type declarations come from this repo's own `node_modules`, pinned by the local
+(gitignored) `package-lock.json`. Pi's standalone binary ships no `.d.ts` and the
+installed git copy under `~/.config/pi/git/` has no `node_modules`, so `pi update
+--extensions` never refreshes types — after Pi itself updates, run `npm update`
+(`npm install` alone respects the lockfile and stays stale) to pull the peer
+packages declared with `"*"`.
+
 ## Pi documentation
 
 Before customizing or extending Pi itself — extensions, skills, prompt templates, themes, TUI components, keybindings, packages, the SDK — read Pi's docs instead of working from memory or guessing at APIs. Pages are hosted at `https://pi.dev/docs/latest/<page>` (e.g. `.../latest/skills` for skill creation) and ship bundled with the installed binary: resolve `docs/<page>.md` and `examples/` under Pi's install directory, found via `dirname "$(readlink -f "$(command -v pi)")"`. Follow a page's cross-references before implementing, and treat upstream docs as authoritative over the conventions here.
