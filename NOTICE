@@ -8,7 +8,8 @@ projects, each retaining its original license:
 extensions/notify.ts
   Derived from mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/notify.ts
-  Modified: simplified to OSC 777 notifications only.
+  Modified: simplified to OSC 777 notifications only; notify on agent_settled
+  rather than agent_end.
 
 extensions/goal.ts
   Derived from mitsuhiko/agent-stuff (Apache-2.0):
