@@ -4,6 +4,9 @@
   "description": "Personal Pi package — extensions, skills, prompts, and themes",
   "license": "Apache-2.0",
   "keywords": ["pi-package"],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "pi": {
     "extensions": ["./extensions"],
     "skills": ["./skills"],
@@ -15,5 +18,9 @@
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-tui": "*",
     "typebox": "*"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "@types/node": "^26.6.4"
   }
 }
