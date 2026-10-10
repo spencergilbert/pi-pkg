@@ -17,11 +17,6 @@ extensions/goal.ts
   Modified: session-log-backed state instead of an external database; optional
   token budget; stricter completion and blocked audits.
 
-themes/catppuccin-frappe.json
-  Derived from madeleineostoja/pi-catppuccin (MIT, Copyright (c) 2026 Madeleine Ostoja):
-  https://github.com/madeleineostoja/pi-catppuccin/blob/main/themes/catppuccin-frappe.json
-  Modified: mauve accent, quiet surface/overlay chrome, thinking gradient.
-
 skills/github/SKILL.md
   Derived from mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/skills/github/SKILL.md
