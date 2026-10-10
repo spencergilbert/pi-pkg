@@ -40,3 +40,12 @@ skills/commit/SKILL.md
   Modified: defers to project instructions and observed history instead of a
   prescribed Conventional Commits format; detects jj as well as git; leaves
   signing and trailers to repository configuration.
+
+skills/plan-audit/scripts/audit.mjs
+  Inspired by mitsuhiko/agent-stuff (Apache-2.0):
+  https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/session-breakdown.ts
+  Modified: standalone Node script (no TUI) auditing flat-rate plan value:
+  allowance-pool and Credit-pool reconciliation against provider-reported
+  quota, 30-day cycle anchoring, peak/off-peak windows, mix economics at the
+  account's cache ratio, and latency tables; adopts only the tolerant usage
+  readers and the test-provider filter.
