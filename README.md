@@ -15,5 +15,6 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 
 - [commit](./skills/commit/README.md) - commit changes with a message matching the repository's own conventions, in git or jj.
 - [github](./skills/github/README.md) - use the `gh` CLI when interacting with GitHub.
+- [gitlab](./skills/gitlab/README.md) - use the `glab` CLI when interacting with GitLab.
 - [kagi](./skills/kagi/README.md) - web search and extraction via the Kagi API.
 - [plan-audit](./skills/plan-audit/README.md) - audit flat-rate AI coding subscriptions against session logs, reconciled with provider-reported quota.
