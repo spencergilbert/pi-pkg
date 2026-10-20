@@ -41,8 +41,8 @@ skills/commit/SKILL.md
   Inspired by mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/skills/commit/SKILL.md
   Modified: defers to project instructions and observed history instead of a
-  prescribed Conventional Commits format; detects jj as well as git; leaves
-  signing and trailers to repository configuration.
+  prescribed Conventional Commits format; leaves signing and trailers to
+  repository configuration.
 
 skills/plan-audit/scripts/audit.mjs
   Inspired by mitsuhiko/agent-stuff (Apache-2.0):
