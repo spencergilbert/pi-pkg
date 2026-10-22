@@ -1,15 +1,17 @@
-name: Publish to npm
+name: Stage npm release
 
-# Tag pushes publish with provenance, through npm trusted publishing: no token,
-# no secret, and the attestation names this repository and workflow.
+# Tag pushes stage a release for approval, through npm trusted publishing: no
+# token, no secret, and the attestation names this repository and workflow.
+# Nothing goes live from CI — a maintainer reviews the stage and approves it
+# with 2FA (`npm stage list`, `npm stage view`, `npm stage approve`), which is
+# why the trusted publisher needs only `npm stage publish`, not `npm publish`.
 #
 # Bare-semver tags (`0.1.0`, not `v0.1.0`). The pattern below is GitHub's own
 # filter syntax — `[0-9]+` is one or more digits, `.` any character — not a
 # regex, so it stays as written.
 #
-# The first version has to be published by hand: npm only allows a trusted
-# publisher to be configured once the package exists. See AGENTS.md, "CI and
-# releases".
+# The first version (0.1.0) was published by hand, before the trusted publisher
+# existed. See AGENTS.md, "CI and releases".
 on:
   push:
     tags:
@@ -20,7 +22,7 @@ permissions:
   id-token: write
 
 jobs:
-  publish:
+  stage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -54,12 +56,49 @@ jobs:
       - name: Typecheck extensions
         run: npm run typecheck
 
-      - name: Publish
+      - name: Check npm CLI supports staging
+        run: |
+          set -euo pipefail
+          node -e '
+            const [major, minor] = require("child_process")
+              .execSync("npm --version")
+              .toString()
+              .trim()
+              .split(".")
+              .map(Number);
+            if (major < 11 || (major === 11 && minor < 15)) {
+              console.error(`npm ${major}.${minor} cannot stage releases; 11.15.0 or later is required`);
+              process.exit(1);
+            }
+            console.log(`npm ${major}.${minor}`);
+          '
+
+      - name: Stage release
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
-          if npm view "@brainrot.xyz/pi-pkg@$version" version >/dev/null 2>&1; then
+          spec="@brainrot.xyz/pi-pkg@$version"
+
+          if npm view "$spec" version >/dev/null 2>&1; then
             echo "Version $version is already published; nothing to do."
             exit 0
           fi
-          npm publish --provenance --access public
+
+          if npm stage list "@brainrot.xyz/pi-pkg" --json | grep -q "$version"; then
+            echo "Version $version is already staged; approve it with \`npm stage approve <stage-id>\`."
+            exit 0
+          fi
+
+          npm stage publish --provenance --access public
+
+          {
+            echo "### Staged \`$version\`"
+            echo
+            echo "Nothing is public yet. Review and approve with 2FA:"
+            echo
+            echo '```bash'
+            echo "npm stage list @brainrot.xyz/pi-pkg"
+            echo "npm stage view <stage-id>"
+            echo "npm stage approve <stage-id>"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

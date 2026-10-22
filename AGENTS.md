@@ -110,21 +110,24 @@ repository:
 - `.tangled/workflows/canary.yml` — weekly `npm update` plus typecheck against
   the newest Pi release. Green means the lockfile can move; red means a Pi
   release broke the extension API, so fix the extensions before upgrading.
-- `.github/workflows/npm-publish.yml` — publishes on bare-semver tags from the
-  GitHub mirror, with provenance and no token.
+- `.github/workflows/npm-publish.yml` — stages a release on bare-semver tags
+  from the GitHub mirror, with provenance and no token.
 
-Releases are tags: the first version is published by hand, later versions come
-from the tag workflow.
+The trusted publisher on npmjs.com (`@brainrot.xyz/pi-pkg` →
+`spencergilbert/pi-pkg`, workflow `npm-publish.yml`) allows only
+`npm stage publish`: nothing reaches the registry from CI until a maintainer
+approves it with 2FA.
 
-1. `npm login`, then `npm publish --access public` for the initial version; npm
-   only lets a trusted publisher be configured once the package exists.
-2. Configure the trusted publisher on npmjs.com for `@brainrot.xyz/pi-pkg`:
-   repository `spencergilbert/pi-pkg`, workflow `npm-publish.yml`. A new
-   configuration must complete a publish within two days of being created.
-3. For later releases: `npm version <level> --no-git-tag-version`, update
-   `CHANGELOG.md`, commit, then `git tag -a <version> -m <version>` and push
-   `main` and the tag. The publish workflow skips a version that is already on
-   the registry, so re-pushing a tag is safe.
+To release:
+
+1. `npm version <level> --no-git-tag-version`, update `CHANGELOG.md`, commit.
+2. `git tag -a <version> -m <version>`, then push `main` and the tag.
+3. The tag workflow stages the version and prints the review commands: `npm stage list @brainrot.xyz/pi-pkg`,
+   `npm stage view <stage-id>`, `npm stage download <stage-id>`, then
+   `npm stage approve <stage-id>`.
+
+A version already on the registry, or already staged, is skipped, so re-pushing
+a tag is safe.
 
 ## Pi documentation
 
