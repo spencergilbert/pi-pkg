@@ -1,9 +1,27 @@
 {
-  "name": "pi-pkg",
+  "name": "@brainrot.xyz/pi-pkg",
+  "version": "0.1.0",
   "private": true,
   "description": "Personal Pi package — extensions, skills, prompts, and themes",
   "license": "Apache-2.0",
-  "keywords": ["pi-package"],
+  "author": "Spencer Gilbert <me@spencergilbert.dev> (https://spencergilbert.dev)",
+  "homepage": "https://tangled.org/spencergilbert.dev/pi-pkg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spencergilbert/pi-pkg.git"
+  },
+  "bugs": {
+    "url": "https://tangled.org/spencergilbert.dev/pi-pkg/issues"
+  },
+  "keywords": ["pi-package", "pi-extension", "pi-skill", "pi-theme"],
+  "files": [
+    "extensions",
+    "skills",
+    "prompts",
+    "themes",
+    "NOTICE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },

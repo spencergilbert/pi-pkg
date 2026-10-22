@@ -1,0 +1,65 @@
+name: Publish to npm
+
+# Tag pushes publish with provenance, through npm trusted publishing: no token,
+# no secret, and the attestation names this repository and workflow.
+#
+# Bare-semver tags (`0.1.0`, not `v0.1.0`). The pattern below is GitHub's own
+# filter syntax — `[0-9]+` is one or more digits, `.` any character — not a
+# regex, so it stays as written.
+#
+# The first version has to be published by hand: npm only allows a trusted
+# publisher to be configured once the package exists. See AGENTS.md, "CI and
+# releases".
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify tag matches package.json version
+        run: |
+          set -euo pipefail
+          node -e '
+            const pkg = require("./package.json");
+            const tag = process.env.GITHUB_REF_NAME;
+            if (pkg.private) {
+              console.error("package.json is still private; the release commit removes it");
+              process.exit(1);
+            }
+            if (pkg.version !== tag) {
+              console.error(`Tag ${tag} does not match package.json version ${pkg.version}`);
+              process.exit(1);
+            }
+          '
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck extensions
+        run: npm run typecheck
+
+      - name: Publish
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          if npm view "@brainrot.xyz/pi-pkg@$version" version >/dev/null 2>&1; then
+            echo "Version $version is already published; nothing to do."
+            exit 0
+          fi
+          npm publish --provenance --access public

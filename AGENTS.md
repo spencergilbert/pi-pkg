@@ -100,6 +100,32 @@ against, and CI installs from it with `npm ci`. Pi's standalone binary ships no
 itself updates, run `npm update` (`npm install` alone respects the lockfile and
 stays stale) and commit the lockfile together with a passing typecheck.
 
+## CI and releases
+
+Pipelines run on `spindle.tangled.sh`, which is already selected for this
+repository:
+
+- `.tangled/workflows/ci.yml` — `npm ci` plus `npm run typecheck` on pushes to
+  `main` and on pull requests targeting it.
+- `.tangled/workflows/canary.yml` — weekly `npm update` plus typecheck against
+  the newest Pi release. Green means the lockfile can move; red means a Pi
+  release broke the extension API, so fix the extensions before upgrading.
+- `.github/workflows/npm-publish.yml` — publishes on bare-semver tags from the
+  GitHub mirror, with provenance and no token.
+
+Releases are tags, and the first version is published by hand, because npm only
+allows a trusted publisher to be configured once the package exists:
+
+1. `npm login`, then `npm publish --access public` for the initial version.
+2. Configure the trusted publisher on npmjs.com for `@brainrot.xyz/pi-pkg`:
+   repository `spencergilbert/pi-pkg`, workflow `npm-publish.yml`. A new
+   configuration must complete a publish within two days of being created.
+3. For later releases: `npm version <level> --no-git-tag-version`, update
+   `CHANGELOG.md`, remove `"private"` if it is still set, commit, then
+   `git tag -a <version> -m <version>` and push `main` and the tag. The publish
+   workflow refuses a private package and skips a version that is already on the
+   registry, so re-pushing a tag is safe.
+
 ## Pi documentation
 
 Before customizing or extending Pi itself — extensions, skills, prompt templates, themes, TUI components, keybindings, packages, the SDK — read Pi's docs instead of working from memory or guessing at APIs. Pages are hosted at `https://pi.dev/docs/latest/<page>` (e.g. `.../latest/skills` for skill creation) and ship bundled with the installed binary: resolve `docs/<page>.md` and `examples/` under Pi's install directory, found via `dirname "$(readlink -f "$(command -v pi)")"`. Follow a page's cross-references before implementing, and treat upstream docs as authoritative over the conventions here.
