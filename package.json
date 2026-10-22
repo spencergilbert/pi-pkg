@@ -1,6 +1,6 @@
 {
   "name": "@brainrot.xyz/pi-pkg",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Personal Pi package — extensions, skills, prompts, and themes",
   "license": "Apache-2.0",
   "author": "Spencer Gilbert <me@spencergilbert.dev> (https://spencergilbert.dev)",
@@ -12,7 +12,12 @@
   "bugs": {
     "url": "https://tangled.org/spencergilbert.dev/pi-pkg/issues"
   },
-  "keywords": ["pi-package", "pi-extension", "pi-skill", "pi-theme"],
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi-skill",
+    "pi-theme"
+  ],
   "files": [
     "extensions",
     "skills",
@@ -25,10 +30,18 @@
     "typecheck": "tsc --noEmit"
   },
   "pi": {
-    "extensions": ["./extensions"],
-    "skills": ["./skills"],
-    "prompts": ["./prompts"],
-    "themes": ["./themes"]
+    "extensions": [
+      "./extensions"
+    ],
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ],
+    "themes": [
+      "./themes"
+    ]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",

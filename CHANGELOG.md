@@ -4,6 +4,10 @@ All notable changes to pi-pkg are documented here. Versions match the Git tags.
 
 ## Unreleased
 
+## 0.1.1
+
+* Releases are staged for approval with provenance instead of published directly. Package contents are unchanged from 0.1.0.
+
 ## 0.1.0
 
 * Added the `goal` extension for long-running objective mode with automatic continuation.
