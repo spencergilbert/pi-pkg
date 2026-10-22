@@ -1,0 +1,23 @@
+# Weekly drift check: resolve the newest Pi release and typecheck against it.
+#
+# A green run means the lockfile can move with `npm update` plus a committed
+# lockfile diff. A red run means a Pi release changed the extension API (or the
+# typebox surface it exposes) and the extensions need work before the next
+# upgrade.
+when:
+  - event: schedule
+    schedule:
+      - cron: "H 3 * * 1"
+
+engine: "microvm"
+image: "nixos"
+dependencies:
+  - nodejs_24
+
+steps:
+  - name: "Install dependencies"
+    command: "npm ci --no-audit --no-fund"
+  - name: "Upgrade host packages"
+    command: "npm update --no-audit --no-fund"
+  - name: "Typecheck extensions"
+    command: "npm run typecheck"

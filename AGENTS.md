@@ -91,12 +91,14 @@ Update the credit sentence and its `NOTICE` entry in the same commit as the arti
 npm run typecheck   # tsc --noEmit over extensions/, per tsconfig.json
 ```
 
-Type declarations come from this repo's own `node_modules`, pinned by the local
-(gitignored) `package-lock.json`. Pi's standalone binary ships no `.d.ts` and the
-installed git copy under `~/.config/pi/git/` has no `node_modules`, so `pi update
---extensions` never refreshes types — after Pi itself updates, run `npm update`
-(`npm install` alone respects the lockfile and stays stale) to pull the peer
-packages declared with `"*"`.
+Type declarations come from this repo's own `node_modules`. `package-lock.json`
+is committed even though every Pi package is a `"*"` peer: the peers say what
+consumers need, the lock says which release the extensions were typechecked
+against, and CI installs from it with `npm ci`. Pi's standalone binary ships no
+`.d.ts` and the installed git copy under `~/.config/pi/git/` has no
+`node_modules`, so `pi update --extensions` never refreshes types — after Pi
+itself updates, run `npm update` (`npm install` alone respects the lockfile and
+stays stale) and commit the lockfile together with a passing typecheck.
 
 ## Pi documentation
 

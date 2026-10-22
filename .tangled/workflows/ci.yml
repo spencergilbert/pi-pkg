@@ -1,0 +1,21 @@
+# Typecheck the extensions against the Pi release pinned in package-lock.json.
+#
+# Every Pi package is a "*" peer, so the lockfile is not pinning consumers — it
+# records the release this package was built and typechecked against. Moving it
+# is a deliberate `npm update` commit; canary.yml reports when that is due.
+when:
+  - event: ["push"]
+    branch: ["main"]
+  - event: ["pull_request"]
+    branch: ["main"]
+
+engine: "microvm"
+image: "nixos"
+dependencies:
+  - nodejs_24
+
+steps:
+  - name: "Install dependencies"
+    command: "npm ci --no-audit --no-fund"
+  - name: "Typecheck extensions"
+    command: "npm run typecheck"
