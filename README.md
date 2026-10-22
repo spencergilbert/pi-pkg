@@ -18,3 +18,4 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 - [gitlab](./skills/gitlab/README.md) - use the `glab` CLI when interacting with GitLab.
 - [kagi](./skills/kagi/README.md) - web search and extraction via the Kagi API.
 - [plan-audit](./skills/plan-audit/README.md) - audit flat-rate AI coding subscriptions against session logs, reconciled with provider-reported quota.
+- [tangled](./skills/tangled/README.md) - use the `tg` CLI when interacting with Tangled.

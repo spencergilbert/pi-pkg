@@ -52,3 +52,11 @@ skills/plan-audit/scripts/audit.mjs
   quota, 30-day cycle anchoring, peak/off-peak windows, mix economics at the
   account's cache ratio, and latency tables; adopts only the tolerant usage
   readers and the test-provider filter.
+
+skills/tangled/SKILL.md
+  Inspired by alyraffauf/tg (GPL-3.0):
+  https://github.com/alyraffauf/tg/blob/main/SKILL.md
+  Modified: house-style Pi skill; retains the command recipes and the
+  patch-and-round pull request model, adds explicit repository targeting,
+  record-key addressing, non-interactive and output-projection habits, the
+  DID-remote inference failure, CI log handling, and approval before writes.
