@@ -39,7 +39,7 @@ jobs:
             const pkg = require("./package.json");
             const tag = process.env.GITHUB_REF_NAME;
             if (pkg.private) {
-              console.error("package.json is still private; the release commit removes it");
+              console.error("package.json is marked private; remove the flag to publish");
               process.exit(1);
             }
             if (pkg.version !== tag) {

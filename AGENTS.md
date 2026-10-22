@@ -113,18 +113,18 @@ repository:
 - `.github/workflows/npm-publish.yml` — publishes on bare-semver tags from the
   GitHub mirror, with provenance and no token.
 
-Releases are tags, and the first version is published by hand, because npm only
-allows a trusted publisher to be configured once the package exists:
+Releases are tags: the first version is published by hand, later versions come
+from the tag workflow.
 
-1. `npm login`, then `npm publish --access public` for the initial version.
+1. `npm login`, then `npm publish --access public` for the initial version; npm
+   only lets a trusted publisher be configured once the package exists.
 2. Configure the trusted publisher on npmjs.com for `@brainrot.xyz/pi-pkg`:
    repository `spencergilbert/pi-pkg`, workflow `npm-publish.yml`. A new
    configuration must complete a publish within two days of being created.
 3. For later releases: `npm version <level> --no-git-tag-version`, update
-   `CHANGELOG.md`, remove `"private"` if it is still set, commit, then
-   `git tag -a <version> -m <version>` and push `main` and the tag. The publish
-   workflow refuses a private package and skips a version that is already on the
-   registry, so re-pushing a tag is safe.
+   `CHANGELOG.md`, commit, then `git tag -a <version> -m <version>` and push
+   `main` and the tag. The publish workflow skips a version that is already on
+   the registry, so re-pushing a tag is safe.
 
 ## Pi documentation
 

@@ -1,7 +1,6 @@
 {
   "name": "@brainrot.xyz/pi-pkg",
   "version": "0.1.0",
-  "private": true,
   "description": "Personal Pi package — extensions, skills, prompts, and themes",
   "license": "Apache-2.0",
   "author": "Spencer Gilbert <me@spencergilbert.dev> (https://spencergilbert.dev)",
