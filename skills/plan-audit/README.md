@@ -24,8 +24,8 @@ scripts/audit.mjs -h                             # all options
 ## Setup
 
 Two config layers. Provider facts (metering style, allowance exchange rates, peak/off-peak windows, pay-as-you-go
-reference prices, intelligence scores) ship in `references/providers.json` — review them when a provider reprices
-(see `asOf` and `reviewWhen` in that file; `audit.mjs` warns past 60 days). Your account state lives at
+reference prices, intelligence scores) ship in `references/providers.json` — dated, and it expires: see
+[Keeping the references current](#keeping-the-references-current). Your account state lives at
 `~/.config/pi/plan-audit.json` and is deliberately **not** in version control: it holds the current console reading,
 which a second machine would otherwise `git pull` stale and project from confidently and wrongly.
 
@@ -57,6 +57,39 @@ Anchors are the 30-day billing window's rollover instant in UTC. Where each read
 Refresh the reading once per cycle — or whenever the anchor moves — and the projections (`days to cap`, `projected cycle`,
 `value multiple`) recalibrate. The script warns when a reading is older than 60% of the cycle.
 
+## Keeping the references current
+
+`references/providers.json` is scraped knowledge with an expiry date, not a stable API. `asOf` says when it was last
+re-read; `refresh.sources` lists each URL, what it feeds and how fast it moves; `audit.mjs` warns once `asOf` is older
+than `refresh.warnAfterDays` (21 days), when a dated fact in `refresh.expiring` lapses, and when a promo rate has no
+published end date. Refresh before trusting a report, not after being surprised by one:
+
+1. Re-fetch every URL in `refresh.sources`: OpenCode's [Go usage limits](https://opencode.ai/v2/docs/console/go#usage-limits)
+   and [privacy](https://opencode.ai/v2/docs/console/go#privacy) tables, the
+   [Artificial Analysis feed](https://raw.githubusercontent.com/terryds/bestvaluemodel/main/data/models.json), the
+   [DeepSeek peak-hour page](https://api-docs.deepseek.com/quick_start/pricing).
+2. Rewrite `providers.<id>.limits` (plus `plans` if a tier appeared or moved), `priceDiscounts` for promo rates,
+   `free` / `unlimited` for free SKUs, `intelligence`, `dataUse`.
+3. Keep limits for delisted models and name them in `providers.<id>.retired` — sessions from before the delisting must
+   still divide by the limit they were billed under.
+4. Bump `asOf` and each source's `lastFetched`, record SKU ambiguities in `intelligenceSource.ambiguous`, and commit
+   the data refresh on its own so a price change never rides in with a behaviour change.
+
+What 16 days of staleness cost, measured 2026-10-25: DeepSeek V4.1 Flash's limit moved $60 → $80, Gemini 4 Argon went
+to a 50% token promo that Pi's catalog still prices at list, and Kimi K3.1 Pro, Step 5 Preview, MiniMax M3.1 Flash and
+Beam Free appeared with no entry at all — each silently divided by the `$30` `defaultLimit`, which flattered MiniMax,
+punished Kimi and mis-ordered the value table with no visible defect. Artificial Analysis re-scored DeepSeek V4.1 Flash
+from 34.9 to 45.1 over the same window, and the Index is re-based between versions, so one big score jump means re-read
+the whole table, not that row.
+
+Two warnings cover the failure modes that used to read as zeros:
+
+- **`no published price`** — usage of a model missing from every catalog is reported with its request and token count
+  rather than booked at $0. Free SKUs are real and rotate (Step 5 Preview was free mid-month and is a paid $15-limit
+  model in today's docs), so declare them in `providers.<id>.free`; anything undeclared is a hole in the data, not a
+  bargain.
+- **`no published limit — assumed from defaultLimit`** — flags every pool share divided by a guessed limit.
+
 ## Interpreting the report
 
 - **Allowance pool** (OpenCode Go): `% of allowance` is Σ(spend ÷ that model's published monthly limit), not
@@ -68,8 +101,9 @@ Refresh the reading once per cycle — or whenever the anchor moves — and the 
 - **What your volume would cost** reprices the provider's whole catalog at *your observed* cache ratio. The usual
   3:1 input:output charts badly understate cheap-cache models for a cache-heavy account.
 - `price source` tells you how each model was priced: `catalog` (the provider's own rate), `reference` (the skill's
-  PAYG table, used when the provider publishes $0), `cross:<provider>` (same model id from another catalog), `none`
-  (delisted model — falls back to the cost Pi recorded in-session).
+  PAYG table, used when the provider publishes $0), `cross:<provider>` (same model id from another catalog), `free`
+  (declared in `providers.<id>.free`, no allowance draw), `none` (delisted or unpublished — falls back to the cost Pi
+  recorded in-session, and the script warns: that is a data hole, not a free model).
 - `data` flags models whose discount is paid for in prompts: OpenCode Go publishes a per-model privacy table
   (see `references/providers.json` → `dataUse`) and only the Muse Spark *Contributor* SKUs train (`Yes`,
   retention `Not ZDR`) — OpenCode gates them behind an explicit "allow endpoints that train on request data"

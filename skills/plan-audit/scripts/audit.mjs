@@ -14,6 +14,10 @@
  *              the same window as the local usage, which yields Credits/Mtok.
  *
  * Config: ~/.config/pi/plan-audit.json (see --config, README.md).
+ *
+ * Dated inputs: prices, limits and intelligence come from references/providers.json, which is scraped and expires
+ * (`asOf`, `refresh.sources`, `refresh.warnAfterDays`). Usage of a model with no price anywhere is reported, never
+ * booked at $0, and any pool share divided by `defaultLimit` is flagged as assumed. Read the warnings.
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
@@ -132,9 +136,25 @@ const referencePrices = { ...(ref.referencePrices || {}), ...(personal.reference
 const intelligence = ref.intelligence || {};
 
 const warnings = [];
+const refresh = ref.refresh || {};
 if (ref.asOf) {
   const age = (Date.now() - new Date(ref.asOf).getTime()) / 86400e3;
-  if (age > 60) warnings.push(`reference data is ${age.toFixed(0)} days old (${ref.asOf}) — providers do reprice; re-check the sources in references/providers.json`);
+  const maxAge = refresh.warnAfterDays ?? 60;
+  if (age > maxAge) {
+    warnings.push(`reference data is ${age.toFixed(0)} days old (${ref.asOf}) and every price, limit and score below inherits that — `
+      + `re-fetch references/providers.json → refresh.sources (cadence: ${refresh.cadence || "see that file"})`);
+  }
+}
+for (const e of refresh.expiring || []) {
+  if (!e.until) continue;
+  const days = (new Date(e.until).getTime() - Date.now()) / 86400e3;
+  if (days < 0) warnings.push(`provider fact expired ${e.until} (${e.what}) — re-verify ${e.affects || "it"} before trusting the numbers it feeds`);
+  else if (days < 14) warnings.push(`provider fact expires in ${days.toFixed(0)} days (${e.until}: ${e.what}) — re-verify ${e.affects || "it"}`);
+}
+for (const [p, c] of Object.entries(providersCfg)) {
+  for (const d of c.priceDiscounts || []) {
+    if (!d.until) warnings.push(`${p}: promotional rate on \`${d.model}\` (${d.multiplier ?? 1}x list) has no published expiry — re-check ${d.source || "the provider's docs"} on every refresh`);
+  }
 }
 for (const [p, c] of Object.entries(providersCfg)) {
   if (!c.reported?.at) continue;
@@ -149,7 +169,19 @@ if (!existsSync(opts.sessions)) {
 }
 
 /** Prices for one provider/model: own catalog, else reference table, else another provider's catalog. */
+/** Free endpoints the provider excludes from the allowance (rotating "-free" / unlimited SKUs). */
+function isFree(provider, model) {
+  return ((providersCfg[provider] || {}).free || []).includes(model);
+}
+
+/** Published monthly limit, or null for unlimited SKUs. `defaultLimit` is a guess and is reported as one. */
+function limitFor(cfg, model) {
+  if ((cfg.unlimited || []).includes(model)) return null;
+  return cfg.limits?.[model] ?? cfg.defaultLimit ?? null;
+}
+
 function priceFor(provider, model) {
+  if (isFree(provider, model)) return { rate: null, source: "free" };
   const own = catalog[provider]?.models?.find((m) => m.id === model)?.cost;
   if (own && (own.input || own.output || own.cacheRead || own.cacheWrite)) {
     return { rate: own, source: "catalog" };
@@ -295,8 +327,14 @@ const priced = scoped.map((r) => {
     list = (u.input * priced.input + u.output * priced.output + (u.cacheRead || 0) * priced.cacheRead + (u.cacheWrite || 0) * priced.cacheWrite) / 1e6;
     const peak = cfg.peak;
     if (peak && (peak.models || []).some((p) => r.model.startsWith(p)) && inWindowHour(r.ts, peak)) list *= peak.multiplier ?? 2;
+    // Promotional rates the provider publishes outside its price table (Pi's catalog keeps list prices).
+    for (const d of cfg.priceDiscounts || []) {
+      if (d.model !== r.model) continue;
+      if (d.until && Date.now() > new Date(d.until).getTime()) continue;
+      list *= d.multiplier ?? 1;
+    }
   } else {
-    list = r.usage.cost || 0; // fall back to whatever Pi recorded in-session (usage is already normalized)
+    list = isFree(r.provider, r.model) ? 0 : (r.usage.cost || 0); // fall back to whatever Pi recorded in-session
   }
   // Qwen bills Credits, and its night window (22:00-08:00 UTC+8) discounts them; track that
   // separately from list value so credit attribution uses the discounted weight.
@@ -305,6 +343,23 @@ const priced = scoped.map((r) => {
   if (off && (off.models || []).some((m) => r.model.startsWith(m)) && inOffPeakHour(r.ts, off)) creditList *= off.multiplier ?? 0.4;
   return { ...r, list, creditList, priceSource: source };
 });
+
+// Usage we could not price at all: not free, not catalogued, not in the reference table. Never let this
+// read as "$0 spent" — an unpublished SKU on a flat plan can still be drawing on the allowance.
+{
+  const unpriced = new Map();
+  for (const r of priced) {
+    if (r.priceSource !== "none") continue;
+    const k = `${r.provider}/${r.model}`;
+    const a = unpriced.get(k) || { n: 0, tokens: 0, cost: 0 };
+    a.n++; a.tokens += r.usage.totalTokens || 0; a.cost += r.list;
+    unpriced.set(k, a);
+  }
+  for (const [k, a] of [...unpriced].sort((x, y) => y[1].tokens - x[1].tokens)) {
+    warnings.push(`${k}: ${a.n} requests / ${(a.tokens / 1e6).toFixed(1)}M tokens have no published price — booked at the $${a.cost.toFixed(2)} Pi recorded in-session. `
+      + `If the provider bills for it, the pool numbers above are low: add a referencePrices entry, or list the model in providers.${k.split("/")[0]}.free if it is genuinely free.`);
+  }
+}
 
 const newAgg = () => ({ n: 0, tokens: 0, generated: 0, cache: 0, list: 0, models: new Set(), hours: new Map(), poolHours: new Map(), days: new Set(), files: new Set(), modelList: new Map(), modelCreditList: new Map() });
 
@@ -325,7 +380,7 @@ const by = (keyFn) => {
     const k = keyFn(r);
     if (!map.has(k)) map.set(k, newAgg());
     const pcfg = providersCfg[r.provider] || {};
-    add(map.get(k), r, (pcfg.limits || {})[r.model] ?? pcfg.defaultLimit ?? null);
+    add(map.get(k), r, limitFor(pcfg, r.model));
   }
   return map;
 };
@@ -383,7 +438,7 @@ for (const [provider, agg] of perProvider) {
   for (const r of priced.filter((x) => x.provider === provider)) {
     const k = cycleOf(provider, r.ts);
     if (!cyc.has(k)) cyc.set(k, newAgg());
-    add(cyc.get(k), r, (cfg.limits || {})[r.model] ?? cfg.defaultLimit ?? null);
+    add(cyc.get(k), r, limitFor(cfg, r.model));
   }
 
   const cycleAgg = new Map();
@@ -398,13 +453,12 @@ for (const [provider, agg] of perProvider) {
     c.elapsedDays = cycleElapsed;
     if (cfg.metering === "allowance") {
       const limits = cfg.limits || {};
-      const fallback = cfg.defaultLimit ?? null;
       let pool = 0; const parts = [];
       for (const [model, spend] of a.modelList) {
-        const limit = limits[model] ?? fallback;
+        const limit = limitFor(cfg, model);
         if (!limit) continue;
         pool += spend / limit;
-        parts.push({ model, spend, limit, share: spend / limit });
+        parts.push({ model, spend, limit, share: spend / limit, assumed: limits[model] == null });
       }
       c.poolUsed = pool;
       c.poolParts = parts.sort((x, y) => y.share - x.share);
@@ -500,7 +554,7 @@ function mixEconomics(provider) {
     return {
       model: m.id, perMtok,
       monthForYourVolume: (perMtok * agg.tokens) / 1e6,
-      limit: limits[m.id] ?? null,
+      limit: limitFor(providersCfg[provider] || {}, m.id),
       intelligence: intelligence[m.id] ?? null,
       used: agg.models.has(m.id),
       trains: trains.has(m.id),
@@ -570,7 +624,7 @@ for (const r of results) {
       w(`Drain by model, ${last.cycleStart.slice(0, 16)}Z cycle:`);
       w();
       for (const p of last.poolParts.slice(0, 8)) {
-        w(`- \`${p.model}\` — ${money(p.spend)} of a ${money(p.limit)} limit = ${(p.share * 100).toFixed(1)}% of the pool`);
+        w(`- \`${p.model}\` — ${money(p.spend)} of a ${money(p.limit)} limit${p.assumed ? " (**no published limit — assumed from defaultLimit**)": ""} = ${(p.share * 100).toFixed(1)}% of the pool`);
       }
       w();
     }
@@ -613,7 +667,8 @@ for (const r of results) {
 
   const mix = mixEconomics(r.provider);
   if (mix.length) {
-    w(`**What your volume would cost on each model of this catalog** (priced at your observed mix, not the usual 3:1):`);
+    w(`**What your volume would cost on each model of this catalog** (priced at your observed mix, not the usual 3:1; `+
+      `intelligence ${ref.intelligenceSource?.asOf || "as shipped"}${refresh.cadence ? ` — both prices and scores expire, see \`refresh.sources\`` : ""}):`);
     w();
     w(`| model | $/Mtok at your mix | your month | % of allowance | intelligence | data | used? |`);
     w(`|---|---|---|---|---|---|---|`);

@@ -49,4 +49,11 @@ Rules for the numbers:
   passes 1x) and the same model id exists on `qwen-token-plan`, move overflow sessions to the Qwen copy, preferably
   off-peak (10:00–20:00 EDT, when both Qwen credits and DeepSeek list rates discount). The reverse move
   (Qwen → Go) applies when Qwen projects over quota: the Qwen copy of a model is a relief valve, not a second home.
-- Surface the script's staleness warnings (old console reading, old reference data) in the summary, not the appendix.
+- Surface the script's staleness warnings (old console reading, old reference data, lapsed or expiry-less provider
+  facts) in the summary, not the appendix.
+- `references/providers.json` is dated and expires. If `asOf` is older than its `refresh.warnAfterDays`, or a
+  `refresh.expiring` entry has lapsed, quote prices, limits and intelligence as provisional and re-read
+  `refresh.sources` before making a plan recommendation from them.
+- Never read a `$0.00` row or a `none` price source as free. Free and unlimited SKUs are declared facts
+  (`providers.<id>.free`, `providers.<id>.unlimited`) and rotate between releases; an undeclared model with no price is
+  a data hole the script warns about, and it may still be drawing on the allowance.
