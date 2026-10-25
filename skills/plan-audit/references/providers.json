@@ -1,54 +1,100 @@
 {
   "_sources": {
-    "deepseek peak hours": "01:00-04:00 and 06:00-10:00 UTC Mon-Fri, 2x. https://api-docs.deepseek.com/quick_start/pricing",
-    "intelligence": "https://bestmodelforyourbudget.terrydjony.com/ (Artificial Analysis Intelligence Index), read off the chart 2026-10-09. Blended price on that chart assumes 3:1 input:output, which is not this account's mix.",
-    "opencode-go limits and prices": "https://opencode.ai/v2/docs/console/go#usage-limits (fetched 2026-10-09). Per-model 'monthly limit' is an exchange rate into one shared allowance, not a separate bucket.",
+    "deepseek peak hours": "01:00-04:00 and 06:00-10:00 UTC Mon-Fri, 2x. https://api-docs.deepseek.com/quick_start/pricing (re-confirmed on the Go docs page 2026-10-25)",
+    "intelligence": "https://bestmodelforyourbudget.terrydjony.com/ fed by https://raw.githubusercontent.com/terryds/bestvaluemodel/main/data/models.json (Artificial Analysis Intelligence Index, fetched 2026-10-25T11:25Z). Highest-scoring reasoning variant per model family. AA re-bases the Index between versions, so compare values only within one snapshot.",
+    "opencode-go limits and prices": "https://opencode.ai/v2/docs/console/go#usage-limits (fetched 2026-10-25). Per-model 'monthly limit' is an exchange rate into one shared allowance, not a separate bucket. The page now publishes two plans (Go $10, Go Plus $40) at the same token prices, and struck-through 'Gemini 4 Argon (50% off)' promo rates.",
+    "opencode-go privacy": "https://opencode.ai/v2/docs/console/go#privacy (fetched 2026-10-25). Only Muse Spark 1.2/1.3 Contributor train; Gemini 4 Argon is 'Not used', 0 days, despite its Contributor SKU; DeepSeek's ZDR agreement is renewed monthly and stated valid through 2026-10-31.",
     "qwen PAYG prices also cover": "qwen3.6-flash/plus, qwen3.7-plus/max, kimi-k2.7-code, deepseek-v3.2 model pages (fetched 2026-10-10); 3.6 generation publishes explicit-cache rates only, no implicit-cache line",
     "qwen off-peak discount": "22:00-08:00 UTC+8 (= 14:00-24:00 UTC): 60% off Credits on qwen3.8-max/flash, 50% off deepseek-v4*.",
     "qwen pay-as-you-go prices": "https://www.qwencloud.com/models/<id> pricing blocks (fetched 2026-10-09).",
     "qwen-token-plan quota": "https://docs.qwencloud.com/token-plan/personal/token-plan-personal-overview (Essential = 25,500 Credits/month).",
     "reported": "Console screenshots; refresh each cycle or the projections are stale."
   },
-  "asOf": "2026-10-09",
+  "asOf": "2026-10-25",
   "dataUse": {
     "_note": "Muse Contributor models require an explicit 'allow endpoints that train on request data' opt-in in OpenCode; pi does not surface that gate.",
     "_sources": [
-      "https://opencode.ai/v2/docs/console/go#privacy (fetched 2026-10-10; every other listed model: training 'Not used', retention 0 or 30 days)",
+      "https://opencode.ai/v2/docs/console/go#privacy (fetched 2026-10-25; every model not named in `retention`: training 'Not used', retention 0 days)",
       "https://dev.meta.ai/docs/models ('discounted Contributor variant trades a lower price for permission to train on your prompts and completions')"
     ],
-    "qwenTokenPlanPersonal": "content may be used for training unless you opt out at privacy@qwen.com; only Team Edition guarantees no training",
+    "qwenTokenPlanPersonal": "content may be used for training unless you opt out at privacy@qwen.com; only Team Edition guarantees no training (unchanged since 2026-10-09; plan no longer active on the auditing account)",
+    "retention": {
+      "beam-free": "30 days, training 'Not used'",
+      "claude-haiku-5-5": "30 days (Anthropic data policies)",
+      "deepseek": "0 days while the ZDR agreement holds; OpenCode states it renews monthly and is currently valid through 2026-10-31",
+      "gemini-4-argon-contributor": "0 days, training 'Not used' \u2014 the Contributor SKU is a pricing label here, not a training opt-in",
+      "gpt-5.6-luna": "30 days of abuse-monitoring logs",
+      "gpt-6-luna": "30 days of abuse-monitoring logs",
+      "grok-4.7": "30 days; ZDR would disable the stateful Responses, Files and Batch APIs",
+      "muse-spark-1.2-contributor": "not ZDR \u2014 trains on prompts and completions",
+      "muse-spark-1.3-contributor": "not ZDR \u2014 trains on prompts and completions"
+    },
     "trainsOnData": [
       "muse-spark-1.3-contributor",
       "muse-spark-1.2-contributor"
     ]
   },
   "intelligence": {
+    "beam-free": 30.3,
     "claude-haiku-5-5": 43.4,
-    "deepseek-v4-flash": 34.9,
-    "deepseek-v4-pro": 36.1,
-    "deepseek-v4.1-flash": 34.9,
-    "glm-5.3": 44.9,
+    "deepseek-v4-flash": 34.3,
+    "deepseek-v4-flash-vision-exp": 34.8,
+    "deepseek-v4-pro": 36.0,
+    "deepseek-v4.1-flash": 45.1,
+    "glm-5.2": 33.7,
+    "glm-5.3": 44.8,
     "glm-5.3-flash": 41.8,
-    "gpt-5.6-luna": 37.0,
-    "gpt-6-luna": 39.4,
-    "kimi-k3": 43.8,
+    "gpt-5.6-luna": 37.3,
+    "gpt-6-luna": 38.1,
+    "grok-4.6": 44.3,
+    "grok-4.7": 46.4,
+    "hy3": 25.3,
+    "kimi-k2.7-code": 25.8,
+    "kimi-k3": 43.6,
+    "kimi-k3.1-pro": 55.1,
+    "longcat-2.0": 19.1,
+    "mimo-v2.5": 21.8,
+    "mimo-v2.5-pro": 26.0,
     "mimo-v2.6-flash": 37.9,
     "mimo-v2.6-pro": 46.3,
+    "minimax-m2.7": 22.8,
+    "minimax-m3": 29.2,
+    "minimax-m3.1-flash": 42.7,
+    "muse-spark-1.2-contributor": 39.6,
     "muse-spark-1.3-contributor": 48.1,
-    "qwen3.8-flash": 40.0,
-    "qwen3.8-max": 45.5
+    "qwen3.7-plus": 25.2,
+    "qwen3.8-flash": 39.8,
+    "qwen3.8-max": 45.4,
+    "step-5-preview": 43.7
+  },
+  "intelligenceSource": {
+    "ambiguous": {
+      "beam-free": "AA slug `reflection-beam` (Beam 1.0).",
+      "deepseek-v4.1-flash": "AA lists V4.1 Flash (Max) 39.5 and the newer 1017 snapshot 45.1; assumed OpenCode serves the newer one.",
+      "qwen3.8-flash": "AA publishes only Qwen3.8-Flash-Next (39.8); the 2026-10-09 chart scored plain qwen3.8-flash at 40.0, so the SKU served here may be the earlier snapshot.",
+      "qwen3.8-max": "Qwen3.8 Max (0902) scores 45.4; the 0803 snapshot scores 40.2.",
+      "step-5-preview": "AA slug `step-5` (Step 5 Preview)."
+    },
+    "asOf": "2026-10-25T11:25Z",
+    "note": "AA's blended $/1M is a 3:1 input:output blend and is not this account's mix; trust audit.mjs's mix table for price and this table only for capability.",
+    "source": "https://bestmodelforyourbudget.terrydjony.com/ (Artificial Analysis data via github.com/terryds/bestvaluemodel)",
+    "variant": "highest-scoring reasoning setting per model family"
   },
   "providers": {
     "opencode-go": {
       "cycleDays": 30,
       "defaultLimit": 30,
       "fiveHourFraction": 0.2,
+      "free": [
+        "beam-free"
+      ],
       "limits": {
         "claude-haiku-5-5": 15,
         "deepseek-v4-flash": 30,
         "deepseek-v4-flash-vision-exp": 15,
         "deepseek-v4-pro": 15,
-        "deepseek-v4.1-flash": 60,
+        "deepseek-v4.1-flash": 80,
+        "gemini-4-argon-contributor": 30,
         "glm-5.2": 60,
         "glm-5.3": 15,
         "glm-5.3-flash": 60,
@@ -60,6 +106,7 @@
         "hy4-preview": 30,
         "kimi-k2.7-code": 60,
         "kimi-k3": 15,
+        "kimi-k3.1-pro": 15,
         "longcat-2.0": 60,
         "mimo-v2.5": 60,
         "mimo-v2.5-pro": 15,
@@ -67,12 +114,14 @@
         "mimo-v2.6-pro": 15,
         "minimax-m2.7": 60,
         "minimax-m3": 60,
+        "minimax-m3.1-flash": 20,
         "muse-spark-1.2-contributor": 60,
         "muse-spark-1.3-contributor": 60,
         "qwen3.7-plus": 60,
         "qwen3.8-flash": 30,
         "qwen3.8-max": 15,
-        "space-bunny": 30
+        "space-bunny": 30,
+        "step-5-preview": 15
       },
       "metering": "allowance",
       "peak": {
@@ -99,9 +148,104 @@
           4
         ]
       },
+      "plan": "go",
+      "plans": {
+        "go": {
+          "fee": 10,
+          "limits": {
+            "claude-haiku-5-5": 15,
+            "deepseek-v4-flash": 30,
+            "deepseek-v4-flash-vision-exp": 15,
+            "deepseek-v4-pro": 15,
+            "deepseek-v4.1-flash": 80,
+            "gemini-4-argon-contributor": 30,
+            "glm-5.2": 60,
+            "glm-5.3": 15,
+            "glm-5.3-flash": 60,
+            "gpt-5.6-luna": 15,
+            "gpt-6-luna": 15,
+            "grok-4.6": 15,
+            "grok-4.7": 15,
+            "hy3": 60,
+            "hy4-preview": 30,
+            "kimi-k2.7-code": 60,
+            "kimi-k3": 15,
+            "kimi-k3.1-pro": 15,
+            "longcat-2.0": 60,
+            "mimo-v2.5": 60,
+            "mimo-v2.5-pro": 15,
+            "mimo-v2.6-flash": 60,
+            "mimo-v2.6-pro": 15,
+            "minimax-m2.7": 60,
+            "minimax-m3": 60,
+            "minimax-m3.1-flash": 20,
+            "muse-spark-1.2-contributor": 60,
+            "muse-spark-1.3-contributor": 60,
+            "qwen3.7-plus": 60,
+            "qwen3.8-flash": 30,
+            "qwen3.8-max": 15,
+            "space-bunny": 30,
+            "step-5-preview": 15
+          }
+        },
+        "go_plus": {
+          "fee": 40,
+          "limits": {
+            "claude-haiku-5-5": 60,
+            "deepseek-v4-pro": 60,
+            "deepseek-v4.1-flash": 160,
+            "gemini-4-argon-contributor": 120,
+            "glm-5.2": 180,
+            "glm-5.3": 120,
+            "glm-5.3-flash": 180,
+            "gpt-5.6-luna": 60,
+            "gpt-6-luna": 60,
+            "grok-4.7": 60,
+            "hy3": 240,
+            "hy4-preview": 120,
+            "kimi-k2.7-code": 180,
+            "kimi-k3": 60,
+            "kimi-k3.1-pro": 60,
+            "longcat-2.0": 240,
+            "mimo-v2.5": 120,
+            "mimo-v2.5-pro": 60,
+            "mimo-v2.6-flash": 120,
+            "mimo-v2.6-pro": 60,
+            "minimax-m3": 180,
+            "minimax-m3.1-flash": 80,
+            "muse-spark-1.2-contributor": 120,
+            "muse-spark-1.3-contributor": 120,
+            "qwen3.7-plus": 180,
+            "qwen3.8-flash": 90,
+            "qwen3.8-max": 60,
+            "step-5-preview": 60
+          },
+          "note": "same token prices, higher limits; 2x on the cheap models, 4x on the $15 ones, 8x on glm-5.3"
+        }
+      },
+      "priceDiscounts": [
+        {
+          "model": "gemini-4-argon-contributor",
+          "multiplier": 0.5,
+          "note": "docs show list $4/$20/$0.20 struck through at $2/$10/$0.10; no expiry published. Pi's catalog still carries the full rate, so without this the audit overcharges Gemini 2x.",
+          "source": "https://opencode.ai/v2/docs/console/go#usage-limits",
+          "until": null
+        }
+      ],
+      "retired": [
+        "deepseek-v4-flash",
+        "deepseek-v4-flash-vision-exp",
+        "grok-4.6",
+        "minimax-m2.7",
+        "space-bunny"
+      ],
+      "unlimited": [
+        "beam-free"
+      ],
       "weeklyFraction": 0.5
     },
     "qwen-token-plan": {
+      "_status": "Prices as published 2026-10-09/10 and not re-verified 2026-10-25; retained so historical windows still price correctly.",
       "cycleDays": 30,
       "metering": "credits",
       "offPeak": {
@@ -214,5 +358,66 @@
       "output": 6.0
     }
   },
-  "reviewWhen": "provider catalog prices or published limits change; pi refreshes models-store.json but not this file"
+  "refresh": {
+    "cadence": "every 14 days, and immediately after a provider announcement or a pi catalog refresh \u2014 pi updates models-store.json automatically and never touches this file",
+    "expiring": [
+      {
+        "affects": "dataUse.retention.deepseek",
+        "until": "2026-10-31",
+        "what": "DeepSeek zero-data-retention agreement on OpenCode Go (renews monthly)"
+      },
+      {
+        "affects": "providers.opencode-go.priceDiscounts",
+        "until": null,
+        "what": "Gemini 4 Argon 50% promo \u2014 no end date published"
+      },
+      {
+        "affects": "providers.opencode-go.unlimited",
+        "until": null,
+        "what": "Beam Free 'limited time, limited regions' \u2014 no end date published"
+      }
+    ],
+    "sources": [
+      {
+        "affects": "providers.opencode-go",
+        "cadenceDays": 14,
+        "lastFetched": "2026-10-25",
+        "url": "https://opencode.ai/v2/docs/console/go#usage-limits",
+        "what": "Go / Go Plus limits, token prices, promo rates, free and unlimited models"
+      },
+      {
+        "affects": "dataUse",
+        "cadenceDays": 30,
+        "lastFetched": "2026-10-25",
+        "url": "https://opencode.ai/v2/docs/console/go#privacy",
+        "what": "per-model training and retention table, DeepSeek ZDR window"
+      },
+      {
+        "affects": "intelligence",
+        "cadenceDays": 7,
+        "lastFetched": "2026-10-25",
+        "note": "the feed refreshes daily; a large jump can be a re-base of the Index rather than a better model",
+        "url": "https://raw.githubusercontent.com/terryds/bestvaluemodel/main/data/models.json",
+        "what": "Intelligence Index and cost per task (Artificial Analysis)"
+      },
+      {
+        "affects": "providers.opencode-go.peak",
+        "cadenceDays": 90,
+        "lastFetched": "2026-10-25",
+        "url": "https://api-docs.deepseek.com/quick_start/pricing",
+        "what": "DeepSeek peak/off-peak hours"
+      },
+      {
+        "affects": "providers.qwen-token-plan",
+        "cadenceDays": 0,
+        "lastFetched": "2026-10-10",
+        "note": "cadenceDays 0 = not refreshed while the plan is inactive; refresh before auditing it again",
+        "url": "https://docs.qwencloud.com/token-plan/personal/token-plan-personal-overview",
+        "what": "Qwen Token Plan quota and Credit rates"
+      }
+    ],
+    "warnAfterDays": 21,
+    "why": "Nothing here is stable. In the 16 days from 2026-10-09 to 2026-10-25 OpenCode raised DeepSeek V4.1 Flash's limit from $60 to $80, put Gemini 4 Argon on a 50% token promo, and added Kimi K3.1 Pro ($15), Step 5 Preview ($15), MiniMax M3.1 Flash ($20) and Beam Free (unlimited) \u2014 none of which were in this file, so each was silently divided by the $30 defaultLimit and mis-ranked the value table. Artificial Analysis re-scored DeepSeek V4.1 Flash from 34.9 to 45.1 over the same span."
+  },
+  "reviewWhen": "Provider catalog prices, plan tiers, promo rates or published limits change, or usage appears for a model with no limit here. See `refresh.sources` for URLs and cadence, and `refresh.why` for the damage staleness did on 2026-10-25."
 }

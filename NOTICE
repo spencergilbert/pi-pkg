@@ -44,6 +44,16 @@ skills/commit/SKILL.md
   prescribed Conventional Commits format; leaves signing and trailers to
   repository configuration.
 
+skills/plan-audit/references/providers.json
+  Derived from terryds/bestvaluemodel (no license published; the underlying
+  Artificial Analysis data requires attribution):
+  https://github.com/terryds/bestvaluemodel/blob/main/data/models.json
+  Modified: reduced to one Intelligence Index per OpenCode Go / Qwen model id
+  (highest-scoring reasoning variant per family), with SKU-vs-snapshot
+  ambiguities recorded alongside it. Every price, limit, free-tier and privacy
+  row is transcribed by hand from the providers' own documentation
+  (opencode.ai/v2/docs/console/go, api-docs.deepseek.com), not from that feed.
+
 skills/plan-audit/scripts/audit.mjs
   Inspired by mitsuhiko/agent-stuff (Apache-2.0):
   https://github.com/mitsuhiko/agent-stuff/blob/main/extensions/session-breakdown.ts
