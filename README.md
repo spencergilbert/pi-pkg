@@ -5,6 +5,7 @@ Personal [Pi](https://pi.dev) package — extensions, skills, prompts, and theme
 ## Extensions
 
 - [goal.ts](./extensions/goal.ts) - long-running objective mode with automatic continuation.
+- [review-loop.ts](./extensions/review-loop.ts) - `/review-loop` iterates agentic changes through review and fix rounds until they are ready for a human.
 - [notify.ts](./extensions/notify.ts) - sends a native terminal notification (OSC 777) when Pi finishes and is waiting for input.
 
 ## Prompts
